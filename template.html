@@ -81,7 +81,7 @@ header p { margin: 6px 0 0; color: var(--muted); font-size: .95rem; }
 .roster b { font-weight: 600; }
 .roster .cnt { color: var(--muted); font-variant-numeric: tabular-nums; }
 .roster .outs { color: var(--muted); }
-.roster .src { color: var(--muted); font-size: .72rem; }
+
 .empty { padding: 14px 0; color: var(--muted); font-size: .95rem; line-height: 1.45; }
 .empty strong { color: var(--fg); font-weight: 600; }
 .note { color: var(--muted); font-size: .8rem; line-height: 1.5; padding: 0 0 10px; }
@@ -162,7 +162,6 @@ function gameRow(g) {
     <div class="roster" id="${id}" hidden>
       ${teamLine(g.away, a)}
       ${teamLine(g.home, h)}
-      <div class="src">Players out, highest paid first.</div>
     </div>
   </div>`;
 }
