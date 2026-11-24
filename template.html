@@ -225,7 +225,9 @@ header h1 { font-family: var(--hand); font-weight: 400; font-size: 2.5rem; line-
 </div>
 
 <script>
-const DATA = /*DATA*/null;
+// Data built into the page at its last build. Where the page can reach ESPN (any normal website),
+// it loads live data on open and refreshes itself; where it can't (inside claude.ai), it uses this.
+const BUILT = /*DATA*/null;
 
 const SERVICES = [
   { id: "prime", bar: "var(--prime)",
@@ -247,17 +249,78 @@ const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 const hex = h => /^[0-9a-f]{6}$/i.test(h || "") ? "#" + h : "#333333";
 const CHEV = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 8l5 5 5-5"/></svg>`;
 
-const now = new Date();
-const today = dayKey(now);
-const games = (DATA && DATA.games) || [];
-const TEAMS = (DATA && DATA.teams) || {};
-const tonight = games.filter(g => g.day === today);
+/* ---------- live data from ESPN (same shape build.py writes) ---------- */
+const API = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba";
+const SERVICE_OF = { "prime video": "prime", "peacock": "peacock", "nbc": "peacock", "nbcsn": "peacock", "espn": "espn", "espn2": "espn", "abc": "espn" };
 
-document.getElementById("date").textContent = dayLabel(today, { weekday: "short", month: "short", day: "numeric" });
-document.getElementById("count").innerHTML = tonight.length
-  ? `<b>${tonight.length}</b> game${tonight.length === 1 ? "" : "s"}` : "No games";
+async function getJSON(url) {
+  const r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+}
 
-function state(g) {
+function gameFromEvent(dayK, ev) {
+  const comp = ev.competitions[0];
+  const side = Object.fromEntries(comp.competitors.map(c => [c.homeAway, c]));
+  const national = (comp.geoBroadcasts || []).filter(g => (g.market || {}).type === "National").map(g => g.media.shortName);
+  let service = "leaguepass", channel = null;
+  for (const name of national) { const s = SERVICE_OF[name.toLowerCase()]; if (s) { service = s; channel = name; break; } }
+  if (service === "leaguepass" && national.length) channel = national[0];
+  const notes = (comp.notes || []).map(n => n.headline || "").join(" ");
+  const team = c => ({
+    id: c.team.id, name: c.team.name, abbr: c.team.abbreviation || "",
+    color: c.team.color || "333333", alt: c.team.alternateColor || "777777",
+    rec: ((c.records || []).find(r => r.type === "total") || {}).summary || null,
+    score: c.score,
+  });
+  const a = team(side.away), h = team(side.home);
+  const st = (ev.status || {}).type || {};
+  return { id: ev.id, day: dayK, start: ev.date, awayId: a.id, homeId: h.id, away: a.name, home: h.name, a, h,
+    state: st.state || "pre", detail: st.shortDetail, service, channel, cup: notes.includes("NBA Cup") };
+}
+
+function salary(ath, year) {
+  const cs = ath.contracts || [];
+  const cur = cs.find(c => (c.season || {}).year === year);
+  return cur ? (cur.salary || 0) : cs.reduce((m, c) => Math.max(m, c.salary || 0), 0);
+}
+
+async function teamStatus(id) {
+  const d = await getJSON(`${API}/teams/${id}/roster`);
+  const year = (d.season || {}).year;
+  const ath = d.athletes || [];
+  const out = ath.filter(a => (a.injuries || []).some(i => (i.status || "").toLowerCase() === "out"))
+    .sort((x, y) => salary(y, year) - salary(x, year));
+  return { roster: ath.length, out: out.map(a => a.shortName || a.displayName), outPay: out.reduce((s, a) => s + salary(a, year), 0) };
+}
+
+const ymd = d => dayKey(d).replaceAll("-", "");
+let teamCache = { at: 0, teams: {} };
+
+async function loadLive() {
+  const now = new Date();
+  const days = [0, 1, 2, 3, 4, 5, 6].map(i => new Date(now.getTime() + i * 864e5));
+  // Today always; the rest of the week only to find each service's next game.
+  const todayBoard = await getJSON(`${API}/scoreboard?dates=${ymd(days[0])}`);
+  let games = (todayBoard.events || []).map(ev => gameFromEvent(dayKey(days[0]), ev));
+  if (!games.length || !teamCache.week) {
+    const rest = await Promise.all(days.slice(1).map(d => getJSON(`${API}/scoreboard?dates=${ymd(d)}`).catch(() => ({ events: [] }))));
+    teamCache.week = rest.flatMap((b, i) => (b.events || []).map(ev => gameFromEvent(dayKey(days[i + 1]), ev)));
+  }
+  games = games.concat(teamCache.week);
+  // Injury lists: re-fetched at most every 10 minutes, only for tonight's teams.
+  const ids = [...new Set(games.filter(g => g.day === dayKey(now)).flatMap(g => [g.awayId, g.homeId]))];
+  if (Date.now() - teamCache.at > 10 * 60e3 || ids.some(id => !teamCache.teams[id])) {
+    const got = await Promise.all(ids.map(id => teamStatus(id).then(t => [id, t]).catch(() => [id, teamCache.teams[id]])));
+    for (const [id, t] of got) if (t) teamCache.teams[id] = t;
+    teamCache.at = Date.now();
+  }
+  games.sort((x, y) => x.start.localeCompare(y.start));
+  return { live: true, updated: now.toISOString(), injuriesAt: new Date(teamCache.at).toISOString(), games, teams: teamCache.teams };
+}
+
+/* ---------- rendering ---------- */
+function state(g, now) {
   if (g.state === "post") return "done";
   if (g.state === "in") return "live";
   const start = new Date(g.start).getTime(), t = now.getTime();
@@ -315,9 +378,8 @@ function tvIcon(n) {
   </svg>`;
 }
 
-let n = 0;
-function gameBug(g) {
-  const s = state(g), id = "g" + (n++);
+function gameBug(g, TEAMS, now, i) {
+  const s = state(g, now), id = "g-" + (g.id || i);
   const a = g.a, h = g.h;
   const ta = TEAMS[g.awayId], th = TEAMS[g.homeId];
   const known = ta && th;
@@ -332,14 +394,14 @@ function gameBug(g) {
   const statusBox = known
     ? `<div class="status" style="--oc:${outColor(outs, pay)}"><span class="big">${outs}</span><span class="small">Player${outs === 1 ? "" : "s"}<br>out</span></div>`
     : `<div class="status"><span class="big">–</span><span class="small">No<br>report</span></div>`;
-  return `<div class="game ${s === "done" ? "done" : ""}">
-    <button type="button" class="bug" aria-expanded="false" aria-controls="${id}"
+  return `<div class="game ${s === "done" ? "done" : ""}" data-gid="${esc(id)}">
+    <button type="button" class="bug" aria-expanded="false" aria-controls="${esc(id)}"
       aria-label="${esc(a.name)} at ${esc(h.name)}${s === "live" ? ", live now" : ""}${known ? `, ${outs} players out` : ""}. Show game info.">
       <div class="rows">${teamRow(a)}${teamRow(h)}</div>
       ${statusBox}
       <div class="foot"><span class="left">${left}${pills.join("")}</span><span class="info">Game info ${CHEV}</span></div>
     </button>
-    <div class="inj" id="${id}" hidden>
+    <div class="inj" id="${esc(id)}" hidden>
       <div class="total">${known ? `${outs} player${outs === 1 ? "" : "s"} out` : "Injury report"}</div>
       ${injuries(a.name, ta)}
       ${injuries(h.name, th)}
@@ -349,100 +411,124 @@ function gameBug(g) {
 
 const sheet = document.getElementById("sheet");
 const wrap = document.getElementById("services");
-const shown = SERVICES
-  .map(svc => ({ svc, list: tonight.filter(g => g.service === svc.id) }))
-  .filter(x => x.list.length)
-  .sort((x, y) => y.list.length - x.list.length);
+const view = { svc: null, game: null };   // what is open, kept across refreshes
 
-function closeNotes(scope) {
-  (scope || wrap).querySelectorAll(".game.open").forEach(gm => {
-    gm.classList.remove("open");
-    gm.querySelector(".inj").hidden = true;
-    gm.querySelector(".bug").setAttribute("aria-expanded", "false");
+function applyView() {
+  wrap.querySelectorAll(".svc").forEach(el => {
+    const open = el.dataset.svc === view.svc;
+    el.classList.toggle("open", open);
+    el.querySelector(".games").hidden = !open;
+    el.querySelector(".head").setAttribute("aria-expanded", String(open));
+    const panel = el.querySelector(".games");
+    let noteOpen = false;
+    panel.querySelectorAll(".game").forEach(gm => {
+      const o = open && gm.dataset.gid === view.game;
+      noteOpen = noteOpen || o;
+      gm.classList.toggle("open", o);
+      gm.querySelector(".inj").hidden = !o;
+      gm.querySelector(".bug").setAttribute("aria-expanded", String(o));
+    });
+    panel.classList.toggle("notefocus", noteOpen);
   });
-  (scope || wrap).querySelectorAll(".games.notefocus").forEach(el => el.classList.remove("notefocus"));
-  if (scope && scope.classList.contains("notefocus")) scope.classList.remove("notefocus");
+  if (!wrap.querySelector(".svc.open")) view.svc = null;
+  if (!wrap.querySelector(".game.open")) view.game = null;
+  sheet.classList.toggle("focus", !!view.svc);
 }
 
-function closeAll() {
-  closeNotes();
-  wrap.querySelectorAll(".svc.open").forEach(el => {
-    el.classList.remove("open");
-    el.querySelector(".games").hidden = true;
-    el.querySelector(".head").setAttribute("aria-expanded", "false");
-  });
-  sheet.classList.remove("focus");
-}
+function render(data) {
+  const now = new Date();
+  const today = dayKey(now);
+  const games = (data && data.games) || [];
+  const TEAMS = (data && data.teams) || {};
+  const tonight = games.filter(g => g.day === today);
 
-for (const { svc, list } of shown) {
-  const el = document.createElement("div");
-  el.className = "svc " + svc.id;
-  if (svc.bar) el.style.setProperty("--bar", svc.bar);
-  el.innerHTML = `
-    <button type="button" class="head" id="btn-${svc.id}" aria-expanded="false" aria-controls="list-${svc.id}">
-      <span class="bar"></span>
-      ${tvIcon(list.length)}
-      ${svc.label}
-      ${CHEV.replace("<svg", '<svg class="chev"')}
-    </button>
-    <div class="games" id="list-${svc.id}" hidden>
-      ${list.map(gameBug).join("")}
-      ${svc.note ? `<div class="note-lp">${svc.note}</div>` : ""}
-    </div>`;
-  const head = el.querySelector(".head"), panel = el.querySelector(".games");
-  head.addEventListener("click", e => {
-    e.stopPropagation();
-    const wasOpen = el.classList.contains("open");
-    closeAll();
-    if (wasOpen) return;
-    el.classList.add("open");
-    panel.hidden = false;
-    head.setAttribute("aria-expanded", "true");
-    sheet.classList.add("focus");
-  });
-  el.querySelectorAll(".bug").forEach(b => b.addEventListener("click", e => {
-    e.stopPropagation();
-    const gm = b.parentElement;
-    const wasOpen = gm.classList.contains("open");
-    closeNotes(panel);
-    if (wasOpen) return;
-    gm.classList.add("open");
-    gm.querySelector(".inj").hidden = false;
-    b.setAttribute("aria-expanded", "true");
-    panel.classList.add("notefocus");
-  }));
-  // A tap inside the open service but outside the open note closes just the note.
-  panel.addEventListener("click", e => {
-    e.stopPropagation();
-    if (panel.classList.contains("notefocus") && !e.target.closest(".game.open")) closeNotes(panel);
-  });
-  el.addEventListener("click", e => e.stopPropagation());
-  wrap.appendChild(el);
+  document.getElementById("date").textContent = dayLabel(today, { weekday: "short", month: "short", day: "numeric" });
+  document.getElementById("count").innerHTML = tonight.length
+    ? `<b>${tonight.length}</b> game${tonight.length === 1 ? "" : "s"}` : "No games";
+
+  const shown = SERVICES
+    .map(svc => ({ svc, list: tonight.filter(g => g.service === svc.id) }))
+    .filter(x => x.list.length)
+    .sort((x, y) => y.list.length - x.list.length);
+
+  wrap.innerHTML = "";
+  for (const { svc, list } of shown) {
+    const el = document.createElement("div");
+    el.className = "svc " + svc.id;
+    el.dataset.svc = svc.id;
+    if (svc.bar) el.style.setProperty("--bar", svc.bar);
+    el.innerHTML = `
+      <button type="button" class="head" id="btn-${svc.id}" aria-expanded="false" aria-controls="list-${svc.id}">
+        <span class="bar"></span>
+        ${tvIcon(list.length)}
+        ${svc.label}
+        ${CHEV.replace("<svg", '<svg class="chev"')}
+      </button>
+      <div class="games" id="list-${svc.id}" hidden>
+        ${list.map((g, i) => gameBug(g, TEAMS, now, svc.id + i)).join("")}
+        ${svc.note ? `<div class="note-lp">${svc.note}</div>` : ""}
+      </div>`;
+    el.querySelector(".head").addEventListener("click", e => {
+      e.stopPropagation();
+      view.svc = view.svc === svc.id ? null : svc.id;   // opening or closing a service closes any note
+      view.game = null;
+      applyView();
+    });
+    el.querySelectorAll(".bug").forEach(b => b.addEventListener("click", e => {
+      e.stopPropagation();
+      const gid = b.parentElement.dataset.gid;
+      view.game = view.game === gid ? null : gid;
+      applyView();
+    }));
+    // A tap inside the open service but outside the open note closes just the note.
+    el.querySelector(".games").addEventListener("click", e => {
+      e.stopPropagation();
+      if (view.game && !e.target.closest(".game.open")) { view.game = null; applyView(); }
+    });
+    el.addEventListener("click", e => e.stopPropagation());
+    wrap.appendChild(el);
+  }
+
+  if (!shown.length) {
+    const next = games.find(g => g.day > today);
+    wrap.innerHTML = `<div class="empty"><div class="big">No games tonight</div>
+      <p>${next ? `Next up: <strong>${esc(dayLabel(next.day, { weekday: "short", month: "short", day: "numeric" }))}, ${esc(next.away)} @ ${esc(next.home)}, ${timeET(next.start)}</strong>` : "Check back tomorrow."}</p></div>`;
+  }
+  applyView();
+
+  const fmt = d => d.toLocaleString("en-US", { timeZone: tz, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  const updated = data && data.updated ? new Date(data.updated) : null;
+  const injAt = data && data.injuriesAt ? new Date(data.injuriesAt) : null;
+  const lastDay = games.length ? games[games.length - 1].day : null;
+  document.getElementById("updated").textContent = data && data.live
+    ? `Live from ESPN, updated ${updated.toLocaleTimeString("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" })} ET. Refreshes every minute.`
+    : (lastDay && today > lastDay ? "This schedule is out of date. " : "") + "Times are Eastern. " +
+      (updated ? `Updated ${fmt(updated)}.` : "") + (injAt ? ` Injuries as of ${fmt(injAt)}.` : "");
 }
 
 // Tapping outside: close an open note first, then the open service.
 document.addEventListener("click", () => {
-  if (wrap.querySelector(".games.notefocus")) closeNotes();
-  else if (sheet.classList.contains("focus")) closeAll();
+  if (view.game) view.game = null; else if (view.svc) view.svc = null; else return;
+  applyView();
 });
 document.addEventListener("keydown", e => {
   if (e.key !== "Escape") return;
-  if (wrap.querySelector(".games.notefocus")) closeNotes(); else closeAll();
+  if (view.game) view.game = null; else view.svc = null;
+  applyView();
 });
 
-if (!shown.length) {
-  const next = games.find(g => g.day > today);
-  wrap.innerHTML = `<div class="empty"><div class="big">No games tonight</div>
-    <p>${next ? `Next up: <strong>${esc(dayLabel(next.day, { weekday: "short", month: "short", day: "numeric" }))}, ${esc(next.away)} @ ${esc(next.home)}, ${timeET(next.start)}</strong>` : "Check back tomorrow."}</p></div>`;
+/* ---------- start: built-in data first, then live if this page can reach ESPN ---------- */
+let current = BUILT;
+render(current);
+let liveOK = true;
+async function refresh() {
+  if (!liveOK || document.hidden) return;
+  try { current = await loadLive(); render(current); }
+  catch (e) { if (current === BUILT) liveOK = false; }   // e.g. inside claude.ai: stay on built-in data
 }
-
-const fmt = d => d.toLocaleString("en-US", { timeZone: tz, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-const updated = DATA && DATA.updated ? new Date(DATA.updated) : null;
-const injAt = DATA && DATA.injuriesAt ? new Date(DATA.injuriesAt) : null;
-const lastDay = games.length ? games[games.length - 1].day : null;
-document.getElementById("updated").textContent =
-  (lastDay && today > lastDay ? "This schedule is out of date. " : "") +
-  "Times are Eastern. " +
-  (updated ? `Updated ${fmt(updated)}.` : "") +
-  (injAt ? ` Injuries as of ${fmt(injAt)}.` : "");
+refresh();
+setInterval(refresh, 60e3);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+// Even without new data, re-render each minute so LIVE / FINAL follow the clock.
+setInterval(() => { if (!liveOK) render(current); }, 60e3);
 </script>

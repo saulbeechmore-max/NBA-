@@ -120,6 +120,7 @@ def game_from_event(day_key, ev):
     link = next((l.get("href") for l in ev.get("links", []) if (l.get("href") or "").startswith("https://www.espn.com/")), None)
     a, h = team(side["away"]), team(side["home"])
     return {
+        "id": ev.get("id"),
         "day": day_key,
         "start": ev["date"],
         "awayId": a["id"],
