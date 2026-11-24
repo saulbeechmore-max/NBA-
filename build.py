@@ -4,9 +4,15 @@ Pulls the next 7 days of NBA games from ESPN's public scoreboard feed,
 sorts each game onto the service that carries it (Prime Video, Peacock,
 ESPN, or League Pass) and writes the data into template.html.
 
-Usage: python3 build.py
+Injury lists refresh once a day, at the first build after 6:30 PM Eastern.
+Every other build reuses the injury lists from the live page, passed with
+--prev (the page's saved HTML). Without --prev, injuries are fetched fresh.
+
+Usage: python3 build.py [--prev PATH_TO_LIVE_PAGE_HTML]
 """
+import argparse
 import json
+import re
 import urllib.request
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -16,6 +22,7 @@ ET = ZoneInfo("America/New_York")
 FEED = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates={}"
 ROSTER = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/{}/roster"
 DAYS = 7
+INJURY_REFRESH = (18, 30)  # 6:30 PM Eastern
 HERE = Path(__file__).parent
 
 # National broadcast name (as ESPN lists it) -> service.
@@ -62,7 +69,20 @@ def team_status(team_id):
     return {
         "roster": len(athletes),
         "out": [a.get("shortName") or a.get("displayName") for a in out],
+        "outPay": sum(salary(a, season_year) for a in out),  # combined yearly salary of players out
     }
+
+
+def previous_data(path):
+    """The DATA object embedded in a previously built page, or None."""
+    if not path:
+        return None
+    try:
+        html = Path(path).read_text()
+        m = re.search(r"const DATA = (\{.*?\});\s*\n", html, re.S)
+        return json.loads(m.group(1)) if m else None
+    except (OSError, ValueError):
+        return None
 
 
 def game_from_event(day_key, ev):
@@ -120,7 +140,11 @@ def game_from_event(day_key, ev):
 
 
 def main():
-    today = datetime.now(ET).date()
+    args = argparse.ArgumentParser()
+    args.add_argument("--prev", help="saved HTML of the live page, to reuse its injury lists")
+    opts = args.parse_args()
+    now = datetime.now(ET)
+    today = now.date()
     games = []
     for i in range(DAYS):
         day = today + timedelta(days=i)
@@ -128,16 +152,32 @@ def main():
             games.append(game_from_event(day.isoformat(), ev))
     games.sort(key=lambda g: g["start"])
     team_ids = sorted({g["awayId"] for g in games} | {g["homeId"] for g in games})
-    teams = {tid: team_status(tid) for tid in team_ids}
+
+    # Injuries: refresh at the first build after today's 6:30 PM; otherwise keep the live page's lists.
+    cutoff = now.replace(hour=INJURY_REFRESH[0], minute=INJURY_REFRESH[1], second=0, microsecond=0)
+    prev = previous_data(opts.prev) or {}
+    prev_teams = prev.get("teams") or {}
+    prev_at = prev.get("injuriesAt")
+    prev_at = datetime.fromisoformat(prev_at) if prev_at else None
+    stale = (not prev_teams or prev_at is None or "outPay" not in next(iter(prev_teams.values()), {})
+             or (now >= cutoff and prev_at < cutoff))
+    if stale:
+        teams = {tid: team_status(tid) for tid in team_ids}
+        injuries_at = now
+    else:
+        teams = {tid: prev_teams[tid] if tid in prev_teams else team_status(tid) for tid in team_ids}
+        injuries_at = prev_at
     data = {
-        "updated": datetime.now(ET).isoformat(timespec="minutes"),
+        "updated": now.isoformat(timespec="minutes"),
+        "injuriesAt": injuries_at.isoformat(timespec="minutes"),
         "games": games,
         "teams": teams,
     }
     html = (HERE / "template.html").read_text()
     html = html.replace("/*DATA*/null", json.dumps(data, separators=(",", ":")))
     (HERE / "index.html").write_text(html)
-    print(f"Wrote index.html: {len(games)} games from {today} for {DAYS} days")
+    print(f"Wrote index.html: {len(games)} games from {today} for {DAYS} days; "
+          f"injuries {'refreshed' if stale else 'kept from ' + injuries_at.strftime('%b %d %I:%M %p')}")
 
 
 if __name__ == "__main__":

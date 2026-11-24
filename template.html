@@ -2,17 +2,16 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Permanent+Marker&family=Saira+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Permanent+Marker&family=Saira+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: a coach's clipboard lying on a basketball. The clipboard fills the screen top to bottom and
-   never grows; its contents scroll inside it. Services open into TV-style score bugs; game info is a
-   sticky note stuck under the bug. One deliberate look. */
+/* Layout: a coach's clipboard lying on a basketball. The clipboard fills the screen and never grows;
+   its contents scroll inside it. Each service shows its game count on a little CRT set and opens into
+   TV-style score bugs; game info is a sticky note stuck under the bug. One deliberate look. */
 :root {
   color-scheme: light;
-  --ball: #5e2610;           /* dark basketball leather */
-  --ball-hi: #7a3414;
+  --ball: #5e2610;
   --seam: #1e0c05;
-  --sheet: #fbfbf7;          /* dry-erase sheet */
+  --sheet: #fbfbf7;
   --ink: #17202c;
   --muted: #5c6675;
   --line: #e1e4e8;
@@ -24,15 +23,22 @@
   --bug-fg: #f4f6fa;
   --bug-muted: #9aa5b6;
   --live: #e23b3b;
-  --note: #fde878;           /* sticky note */
+  --note: #fde878;
   --note-edge: #f2d55a;
   --note-ink: #2b2410;
-  --prime: #0a7fd9;
-  --peacock: #6d4ae0;
-  --espn: #d42a2a;
-  --lp: #1d4f9c;
+  /* players-out severity, by combined yearly salary of players out */
+  --out-none: #34c26a;
+  --out-low: #f2c230;
+  --out-mid: #e0700f;
+  --out-high: #ef4040;
+  /* service brand colors */
+  --prime: #00a8e1;
+  --espn: #dd0000;
+  --nba-blue: #1d428a;
+  --nba-red: #c8102e;
+  --pk-1: #fccc12; --pk-2: #f37021; --pk-3: #ee2c3c; --pk-4: #6e55dc; --pk-5: #069de0; --pk-6: #05ac3f;
   --hand: "Permanent Marker", "Comic Sans MS", cursive;
-  --note-font: "Caveat", "Bradley Hand", "Comic Sans MS", cursive;
+  --note-font: "Patrick Hand", "Segoe Print", "Comic Sans MS", sans-serif;
   --display: "Saira Condensed", "Arial Narrow", system-ui, sans-serif;
   --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -61,7 +67,6 @@ body {
   box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 14px 34px rgba(0,0,0,.5), 0 2px 4px rgba(0,0,0,.35);
   display: flex; flex-direction: column; isolation: isolate;
 }
-/* metal clip */
 .clip { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); width: 130px; height: 56px; z-index: 3; pointer-events: none; }
 .clip .plate { position: absolute; inset: 14px 0 0; border-radius: 10px 10px 16px 16px;
   background: linear-gradient(180deg, #eef1f4, #b9c0c8 45%, #8d959e 55%, #c9cfd5);
@@ -78,55 +83,63 @@ body {
 header { text-align: center; padding: 18px 14px 4px; transition: filter .25s, opacity .25s; }
 header h1 { font-family: var(--hand); font-weight: 400; font-size: 2.5rem; line-height: 1.05; margin: 0; text-wrap: balance; }
 
-.scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px 14px 16px; -webkit-overflow-scrolling: touch; }
+.scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px 14px 16px; }
 .services { display: grid; gap: 12px; }
 .svc { background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
   box-shadow: 0 1px 2px rgba(23,32,44,.06); transition: filter .25s, opacity .25s; }
 .svc > button.head { all: unset; box-sizing: border-box; width: 100%; cursor: pointer;
-  display: grid; grid-template-columns: 6px 1fr auto auto; align-items: center; gap: 14px;
-  padding: 14px 16px 14px 0; min-height: 70px; }
-.svc > button.head:focus-visible { outline: 3px solid var(--c); outline-offset: -3px; border-radius: 14px; }
-.bar { align-self: stretch; background: var(--c); }
-.name { font-family: var(--display); font-weight: 800; font-size: 1.55rem; line-height: 1; text-transform: uppercase; letter-spacing: .02em; }
-.count-pill { font-family: var(--display); font-weight: 800; font-size: 1.1rem; color: #fff; background: var(--c);
-  border-radius: 999px; padding: 3px 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  display: grid; grid-template-columns: 6px auto 1fr auto; align-items: center; gap: 14px;
+  padding: 10px 16px 10px 0; min-height: 76px; }
+.svc > button.head:focus-visible { outline: 3px solid var(--ink); outline-offset: -3px; border-radius: 14px; }
+.bar { align-self: stretch; background: var(--bar); }
+.svc.peacock .bar { background: linear-gradient(180deg, var(--pk-1), var(--pk-2), var(--pk-3), var(--pk-4), var(--pk-5), var(--pk-6)); }
+.name { justify-self: end; text-align: right; font-family: var(--display); font-weight: 800; font-size: 1.6rem; line-height: 1;
+  text-transform: uppercase; letter-spacing: .02em; display: inline-flex; align-items: center; gap: 8px; }
+.name.prime { color: var(--prime); }
+.name.espn { color: var(--espn); font-style: italic; }
+.name.peacock { color: #000; }
+.name .lg { color: var(--nba-blue); } .name .ps { color: var(--nba-red); }
+.dots { display: inline-grid; grid-template-columns: repeat(3, 6px); gap: 2px; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; display: block; }
 .chev { width: 20px; height: 20px; color: var(--muted); transition: transform .2s; }
 .svc.open .chev { transform: rotate(180deg); }
+
+/* CRT set holding the game count */
+.tv { width: 66px; height: 58px; display: block; overflow: visible; }
+.tv .num { font-family: var(--display); font-weight: 800; font-size: 22px; fill: #c9ffe0; filter: drop-shadow(0 0 3px rgba(120,255,180,.85)); }
+
 .games[hidden] { display: none; }
 .games { border-top: 1px solid var(--line); padding: 14px 12px 12px; display: grid; gap: 14px; background: #f6f7f9; }
-.note-lp { color: var(--muted); font-size: .78rem; line-height: 1.45; text-align: center; }
+.note-lp { color: var(--muted); font-size: .78rem; line-height: 1.45; text-align: center; transition: filter .25s, opacity .25s; }
 
-/* focus mode: one service open, the rest of the clipboard goes soft */
+/* focus: an open service blurs the rest of the clipboard; an open sticky note also blurs the other games */
 .focus .top, .focus header, .focus .updated, .focus .svc:not(.open) { filter: blur(3px); opacity: .45; }
+.games.notefocus .game:not(.open), .games.notefocus .note-lp { filter: blur(3px); opacity: .4; }
+.game { display: grid; transition: filter .25s, opacity .25s; }
 
 /* score bug */
-.game { display: grid; }
 .bug { all: unset; box-sizing: border-box; cursor: pointer; width: 100%; position: relative; z-index: 2;
   display: grid; grid-template-columns: 1fr auto; border-radius: 10px; overflow: hidden;
   background: var(--bug); color: var(--bug-fg); box-shadow: 0 4px 10px rgba(16,21,29,.25); }
-.bug:focus-visible { outline: 3px solid var(--c); outline-offset: 2px; }
+.bug:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 .rows { display: grid; }
 .row { display: grid; grid-template-columns: 54px 1fr auto; align-items: center; min-height: 50px; }
 .row + .row { border-top: 1px solid rgba(255,255,255,.07); }
 .abbr { align-self: stretch; display: grid; place-items: center; font-family: var(--display); font-weight: 800;
   font-size: 1.05rem; letter-spacing: .04em; background: var(--tc); color: var(--tf); }
-.tname { padding: 6px 10px; min-width: 0; }
-.tname b { display: block; font-family: var(--display); font-weight: 700; font-size: 1.25rem; line-height: 1.05; text-transform: uppercase; letter-spacing: .02em; }
-.tname small { display: block; color: var(--bug-muted); font-size: .72rem; font-variant-numeric: tabular-nums; margin-top: 1px; }
-.score { font-family: var(--display); font-weight: 800; font-size: 1.6rem; padding: 0 12px; font-variant-numeric: tabular-nums; }
-.score.trail { color: var(--bug-muted); }
+.tname { padding: 6px 10px; min-width: 0; font-family: var(--display); font-weight: 700; font-size: 1.25rem; line-height: 1.05; text-transform: uppercase; letter-spacing: .02em; }
+.rec { font-family: var(--display); font-weight: 600; font-size: 1.15rem; padding: 0 12px; color: var(--bug-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .status { display: grid; align-content: center; justify-items: center; gap: 3px; min-width: 84px; padding: 8px 10px;
-  background: var(--bug-2); border-left: 1px solid rgba(255,255,255,.07); text-align: center; }
-.status .big { font-family: var(--display); font-weight: 800; font-size: 1.6rem; line-height: .95; white-space: nowrap; }
-.status .big.time { font-size: 1.15rem; font-weight: 700; }
-.status .small { font-family: var(--display); font-weight: 600; font-size: .95rem; color: var(--bug-muted); font-variant-numeric: tabular-nums; line-height: 1; }
-.status .z { font-size: .62rem; color: var(--bug-muted); letter-spacing: .08em; text-transform: uppercase; }
+  background: var(--bug-2); border-left: 1px solid rgba(255,255,255,.07); text-align: center; color: var(--oc, var(--bug-muted)); }
+.status .big { font-family: var(--display); font-weight: 800; font-size: 1.9rem; line-height: .9; }
+.status .small { font-family: var(--display); font-weight: 700; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; line-height: 1.05; }
 .pill { font-size: .6rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; border-radius: 4px; padding: 2px 5px; background: rgba(255,255,255,.1); color: var(--bug-muted); white-space: nowrap; }
 .pill.live { background: var(--live); color: #fff; display: inline-flex; align-items: center; gap: 4px; }
 .pill.live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: blink 1.2s infinite; }
 @keyframes blink { 50% { opacity: .25; } }
 .foot { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 28px;
   padding: 5px 10px; font-size: .72rem; color: var(--bug-muted); background: rgba(255,255,255,.04); border-top: 1px solid rgba(255,255,255,.07); }
+.foot .left { display: inline-flex; gap: 6px; align-items: center; }
 .foot .info { display: inline-flex; align-items: center; gap: 4px; color: var(--bug-fg); font-weight: 600; margin-left: auto; }
 .foot svg { width: 13px; height: 13px; transition: transform .2s; }
 .game.open .foot svg { transform: rotate(180deg); }
@@ -136,16 +149,15 @@ header h1 { font-family: var(--hand); font-weight: 400; font-size: 2.5rem; line-
 .inj[hidden] { display: none; }
 .inj { position: relative; z-index: 1; margin: -4px 14px 4px 22px; padding: 20px 14px 14px;
   background: linear-gradient(180deg, var(--note) 0%, var(--note) 88%, var(--note-edge) 100%);
-  color: var(--note-ink); font-family: var(--note-font); font-size: 1.2rem; line-height: 1.15;
+  color: var(--note-ink); font-family: var(--note-font); font-size: 1.15rem; line-height: 1.25;
   transform: rotate(-1.2deg); box-shadow: 0 8px 14px rgba(60,45,0,.25), 0 1px 2px rgba(60,45,0,.2);
   border-radius: 2px 2px 14px 2px; display: grid; gap: 8px; }
 .inj::before { content: ""; position: absolute; top: -10px; left: 50%; transform: translateX(-50%) rotate(2deg);
   width: 74px; height: 20px; background: rgba(255,255,255,.55); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
 .game:nth-child(even) .inj { transform: rotate(1deg); margin: -4px 22px 4px 14px; }
-.inj .total { font-family: var(--hand); font-size: 1.15rem; color: var(--marker-red); border-bottom: 2px solid rgba(43,36,16,.15); padding-bottom: 6px; }
-.inj b { font-weight: 700; }
+.inj .total { font-size: 1.3rem; color: var(--marker-red); border-bottom: 2px solid rgba(43,36,16,.15); padding-bottom: 6px; }
+.inj b { font-weight: 400; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 .inj .cnt { opacity: .7; }
-.inj .who { opacity: .85; }
 
 .empty { text-align: center; padding: 28px 8px 8px; display: grid; gap: 6px; }
 .empty .big { font-family: var(--hand); font-size: 1.6rem; }
@@ -153,22 +165,35 @@ header h1 { font-family: var(--hand); font-weight: 400; font-size: 2.5rem; line-
 .empty strong { color: var(--ink); }
 .updated { color: var(--muted); font-size: .74rem; line-height: 1.5; text-align: center; margin-top: 16px; transition: filter .25s, opacity .25s; }
 @media (prefers-reduced-motion: reduce) {
-  .chev, .foot svg, .svc, header, .top, .updated { transition: none; }
+  .chev, .foot svg, .svc, .game, header, .top, .updated, .note-lp { transition: none; }
   .pill.live::before { animation: none; }
 }
 @media (max-width: 380px) {
   .row { grid-template-columns: 46px 1fr auto; }
   .status { min-width: 72px; }
   header h1 { font-size: 2.1rem; }
+  .name { font-size: 1.35rem; }
 }
 </style>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <radialGradient id="crt" cx="50%" cy="45%" r="70%">
+      <stop offset="0" stop-color="#1d4a3a"/><stop offset=".7" stop-color="#0d231c"/><stop offset="1" stop-color="#050c0a"/>
+    </radialGradient>
+    <linearGradient id="cab" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a5a36"/><stop offset="1" stop-color="#5b3a22"/>
+    </linearGradient>
+    <pattern id="scan" width="4" height="3" patternUnits="userSpaceOnUse">
+      <rect width="4" height="1" fill="rgba(0,0,0,.28)"/>
+    </pattern>
+  </defs>
+</svg>
+
 <svg class="seams" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
   <g fill="none" stroke="var(--seam)" stroke-width="5" opacity=".55">
-    <path d="M-40 400 H440"/>
-    <path d="M200 -40 V840"/>
-    <path d="M60 -40 C150 200 150 600 60 840"/>
-    <path d="M340 -40 C250 200 250 600 340 840"/>
+    <path d="M-40 400 H440"/><path d="M200 -40 V840"/>
+    <path d="M60 -40 C150 200 150 600 60 840"/><path d="M340 -40 C250 200 250 600 340 840"/>
   </g>
 </svg>
 
@@ -203,10 +228,14 @@ header h1 { font-family: var(--hand); font-weight: 400; font-size: 2.5rem; line-
 const DATA = /*DATA*/null;
 
 const SERVICES = [
-  { id: "prime", name: "Prime Video", color: "--prime" },
-  { id: "peacock", name: "Peacock", color: "--peacock" },
-  { id: "espn", name: "ESPN", color: "--espn" },
-  { id: "leaguepass", name: "League Pass", color: "--lp",
+  { id: "prime", bar: "var(--prime)",
+    label: `<span class="name prime">Prime Video</span>` },
+  { id: "peacock", bar: "",
+    label: `<span class="name peacock">Peacock <span class="dots" aria-hidden="true">${[1,2,3,4,5,6].map(i => `<i style="background:var(--pk-${i})"></i>`).join("")}</span></span>` },
+  { id: "espn", bar: "var(--espn)",
+    label: `<span class="name espn">ESPN</span>` },
+  { id: "leaguepass", bar: "var(--nba-blue)",
+    label: `<span class="name"><span class="lg">League</span> <span class="ps">Pass</span></span>`,
     note: "Games with your local team are blacked out on League Pass." },
 ];
 
@@ -228,7 +257,6 @@ document.getElementById("date").textContent = dayLabel(today, { weekday: "short"
 document.getElementById("count").innerHTML = tonight.length
   ? `<b>${tonight.length}</b> game${tonight.length === 1 ? "" : "s"}` : "No games";
 
-// Live / final / upcoming: the last refresh's status wins; between refreshes, judge from the scheduled tip-off.
 function state(g) {
   if (g.state === "post") return "done";
   if (g.state === "in") return "live";
@@ -238,19 +266,12 @@ function state(g) {
   return "pre";
 }
 
-function quarter(p) { return p > 4 ? (p === 5 ? "OT" : (p - 4) + "OT") : "Q" + p; }
-
-// The right-hand box: quarter and clock while live, Final after, tip-off time before.
-function statusBox(g, s) {
-  if (s === "done") return `<span class="big">FINAL</span>`;
-  if (s === "live") {
-    const d = (g.detail || "").toLowerCase();
-    if (g.state === "in" && d.includes("half")) return `<span class="big">HALF</span>`;
-    if (g.state === "in" && d.startsWith("end") && g.period) return `<span class="big">END</span><span class="small">${quarter(g.period)}</span>`;
-    if (g.state === "in" && g.period) return `<span class="big">${quarter(g.period)}</span><span class="small">${esc(g.clock || "")}</span>`;
-    return `<span class="big">Q1</span><span class="small">tip-off</span>`;
-  }
-  return `<span class="big time">${timeET(g.start)}</span><span class="z">ET</span>`;
+// Color for the players-out count, by the combined yearly salary of everyone out in the game.
+function outColor(count, pay) {
+  if (count === 0) return "var(--out-none)";
+  if (pay < 20e6) return "var(--out-low)";
+  if (pay <= 50e6) return "var(--out-mid)";
+  return "var(--out-high)";
 }
 
 function lum(h) { const n = parseInt(h.slice(1), 16); const c = [n >> 16, (n >> 8) & 255, n & 255].map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; }
@@ -260,13 +281,12 @@ function teamColors(t) {
   return { bg, fg: lum(bg) > .45 ? "#10151d" : "#ffffff" };
 }
 
-function teamRow(t, other, showScore) {
+function teamRow(t) {
   const c = teamColors(t);
-  const cls = showScore && Number(t.score) < Number(other.score) ? "trail" : "";
   return `<div class="row">
     <div class="abbr" style="--tc:${c.bg};--tf:${c.fg}">${esc(t.abbr)}</div>
-    <div class="tname"><b>${esc(t.name)}</b>${t.rec ? `<small>${esc(t.rec)}</small>` : ""}</div>
-    ${showScore ? `<div class="score ${cls}">${esc(t.score)}</div>` : `<div></div>`}
+    <div class="tname">${esc(t.name)}</div>
+    <div class="rec">${esc(t.rec || "")}</div>
   </div>`;
 }
 
@@ -274,29 +294,53 @@ function injuries(name, t) {
   if (!t) return `<div><b>${esc(name)}</b> <span class="cnt">no injury report</span></div>`;
   const active = t.roster - t.out.length;
   return `<div><b>${esc(name)}</b> <span class="cnt">${active} of ${t.roster} active</span>
-    <div class="who">${t.out.length ? t.out.map(n => esc(n) + " out").join(", ") : "Nobody out"}</div></div>`;
+    <div>${t.out.length ? t.out.map(n => esc(n) + " out").join(", ") : "Nobody out"}</div></div>`;
+}
+
+function tvIcon(n) {
+  return `<svg class="tv" viewBox="0 0 66 58" role="img" aria-label="${n} game${n === 1 ? "" : "s"}">
+    <g stroke="#3a3f47" stroke-width="2.2" stroke-linecap="round"><line x1="27" y1="10" x2="18" y2="1.5"/><line x1="37" y1="10" x2="47" y2="1.5"/></g>
+    <circle cx="18" cy="1.8" r="1.8" fill="#3a3f47"/><circle cx="47" cy="1.8" r="1.8" fill="#3a3f47"/>
+    <rect x="1" y="9" width="64" height="44" rx="8" fill="url(#cab)"/>
+    <rect x="5" y="13" width="44" height="36" rx="9" fill="#1a1a1a"/>
+    <rect x="7" y="15" width="40" height="32" rx="8" fill="url(#crt)"/>
+    <rect x="7" y="15" width="40" height="32" rx="8" fill="url(#scan)"/>
+    <path d="M11 19 Q20 16 30 17" stroke="rgba(255,255,255,.22)" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <text class="num" x="27" y="39" text-anchor="middle">${n}</text>
+    <rect x="52" y="15" width="10" height="32" rx="3" fill="rgba(0,0,0,.18)"/>
+    <circle cx="57" cy="22" r="3.2" fill="#d9d2c5" stroke="#3a3f47" stroke-width="1"/>
+    <circle cx="57" cy="31" r="3.2" fill="#d9d2c5" stroke="#3a3f47" stroke-width="1"/>
+    <g fill="#3a3f47"><rect x="54" y="38" width="6" height="1.4" rx=".7"/><rect x="54" y="41" width="6" height="1.4" rx=".7"/></g>
+    <g stroke="#3a3f47" stroke-width="2.4" stroke-linecap="round"><line x1="10" y1="53" x2="7" y2="57"/><line x1="56" y1="53" x2="59" y2="57"/></g>
+  </svg>`;
 }
 
 let n = 0;
 function gameBug(g) {
   const s = state(g), id = "g" + (n++);
   const a = g.a, h = g.h;
-  const hasScore = g.state !== "pre" && a.score != null && h.score != null;
   const ta = TEAMS[g.awayId], th = TEAMS[g.homeId];
-  const outs = (ta ? ta.out.length : 0) + (th ? th.out.length : 0);
+  const known = ta && th;
+  const outs = known ? ta.out.length + th.out.length : null;
+  const pay = known ? (ta.outPay || 0) + (th.outPay || 0) : 0;
   const pills = [];
   if (g.cup) pills.push(`<span class="pill">NBA Cup</span>`);
   if (g.channel && !["Prime Video", "Peacock"].includes(g.channel)) pills.push(`<span class="pill">${esc(g.channel)}</span>`);
-  const left = s === "live" ? `<span class="pill live">Live now</span>` : s === "done" ? `<span class="pill">Final</span>` : "";
+  const left = s === "live" ? `<span class="pill live">Live now</span>`
+    : s === "done" ? `<span class="pill">Final</span>`
+    : `<span>${timeET(g.start)} ET</span>`;
+  const statusBox = known
+    ? `<div class="status" style="--oc:${outColor(outs, pay)}"><span class="big">${outs}</span><span class="small">Player${outs === 1 ? "" : "s"}<br>out</span></div>`
+    : `<div class="status"><span class="big">–</span><span class="small">No<br>report</span></div>`;
   return `<div class="game ${s === "done" ? "done" : ""}">
     <button type="button" class="bug" aria-expanded="false" aria-controls="${id}"
-      aria-label="${esc(a.name)} at ${esc(h.name)}${s === "live" ? ", live now" : ""}. Show game info.">
-      <div class="rows">${teamRow(a, h, hasScore)}${teamRow(h, a, hasScore)}</div>
-      <div class="status">${statusBox(g, s)}${pills.join("")}</div>
-      <div class="foot">${left}<span class="info">Game info ${CHEV}</span></div>
+      aria-label="${esc(a.name)} at ${esc(h.name)}${s === "live" ? ", live now" : ""}${known ? `, ${outs} players out` : ""}. Show game info.">
+      <div class="rows">${teamRow(a)}${teamRow(h)}</div>
+      ${statusBox}
+      <div class="foot"><span class="left">${left}${pills.join("")}</span><span class="info">Game info ${CHEV}</span></div>
     </button>
     <div class="inj" id="${id}" hidden>
-      <div class="total">${ta && th ? `${outs} player${outs === 1 ? "" : "s"} out` : "Injury report"}</div>
+      <div class="total">${known ? `${outs} player${outs === 1 ? "" : "s"} out` : "Injury report"}</div>
       ${injuries(a.name, ta)}
       ${injuries(h.name, th)}
     </div>
@@ -310,7 +354,18 @@ const shown = SERVICES
   .filter(x => x.list.length)
   .sort((x, y) => y.list.length - x.list.length);
 
+function closeNotes(scope) {
+  (scope || wrap).querySelectorAll(".game.open").forEach(gm => {
+    gm.classList.remove("open");
+    gm.querySelector(".inj").hidden = true;
+    gm.querySelector(".bug").setAttribute("aria-expanded", "false");
+  });
+  (scope || wrap).querySelectorAll(".games.notefocus").forEach(el => el.classList.remove("notefocus"));
+  if (scope && scope.classList.contains("notefocus")) scope.classList.remove("notefocus");
+}
+
 function closeAll() {
+  closeNotes();
   wrap.querySelectorAll(".svc.open").forEach(el => {
     el.classList.remove("open");
     el.querySelector(".games").hidden = true;
@@ -321,13 +376,13 @@ function closeAll() {
 
 for (const { svc, list } of shown) {
   const el = document.createElement("div");
-  el.className = "svc";
-  el.style.setProperty("--c", `var(${svc.color})`);
+  el.className = "svc " + svc.id;
+  if (svc.bar) el.style.setProperty("--bar", svc.bar);
   el.innerHTML = `
     <button type="button" class="head" id="btn-${svc.id}" aria-expanded="false" aria-controls="list-${svc.id}">
       <span class="bar"></span>
-      <span class="name">${svc.name}</span>
-      <span class="count-pill">${list.length} game${list.length === 1 ? "" : "s"}</span>
+      ${tvIcon(list.length)}
+      ${svc.label}
       ${CHEV.replace("<svg", '<svg class="chev"')}
     </button>
     <div class="games" id="list-${svc.id}" hidden>
@@ -347,18 +402,33 @@ for (const { svc, list } of shown) {
   });
   el.querySelectorAll(".bug").forEach(b => b.addEventListener("click", e => {
     e.stopPropagation();
-    const inj = document.getElementById(b.getAttribute("aria-controls"));
-    const open = inj.hidden;
-    inj.hidden = !open;
-    b.parentElement.classList.toggle("open", open);
-    b.setAttribute("aria-expanded", String(open));
+    const gm = b.parentElement;
+    const wasOpen = gm.classList.contains("open");
+    closeNotes(panel);
+    if (wasOpen) return;
+    gm.classList.add("open");
+    gm.querySelector(".inj").hidden = false;
+    b.setAttribute("aria-expanded", "true");
+    panel.classList.add("notefocus");
   }));
+  // A tap inside the open service but outside the open note closes just the note.
+  panel.addEventListener("click", e => {
+    e.stopPropagation();
+    if (panel.classList.contains("notefocus") && !e.target.closest(".game.open")) closeNotes(panel);
+  });
   el.addEventListener("click", e => e.stopPropagation());
   wrap.appendChild(el);
 }
 
-document.addEventListener("click", () => { if (sheet.classList.contains("focus")) closeAll(); });
-document.addEventListener("keydown", e => { if (e.key === "Escape") closeAll(); });
+// Tapping outside: close an open note first, then the open service.
+document.addEventListener("click", () => {
+  if (wrap.querySelector(".games.notefocus")) closeNotes();
+  else if (sheet.classList.contains("focus")) closeAll();
+});
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if (wrap.querySelector(".games.notefocus")) closeNotes(); else closeAll();
+});
 
 if (!shown.length) {
   const next = games.find(g => g.day > today);
@@ -366,10 +436,13 @@ if (!shown.length) {
     <p>${next ? `Next up: <strong>${esc(dayLabel(next.day, { weekday: "short", month: "short", day: "numeric" }))}, ${esc(next.away)} @ ${esc(next.home)}, ${timeET(next.start)}</strong>` : "Check back tomorrow."}</p></div>`;
 }
 
+const fmt = d => d.toLocaleString("en-US", { timeZone: tz, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 const updated = DATA && DATA.updated ? new Date(DATA.updated) : null;
+const injAt = DATA && DATA.injuriesAt ? new Date(DATA.injuriesAt) : null;
 const lastDay = games.length ? games[games.length - 1].day : null;
 document.getElementById("updated").textContent =
   (lastDay && today > lastDay ? "This schedule is out of date. " : "") +
   "Times are Eastern. " +
-  (updated ? `Updated ${updated.toLocaleString("en-US", { timeZone: tz, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.` : "");
+  (updated ? `Updated ${fmt(updated)}.` : "") +
+  (injAt ? ` Injuries as of ${fmt(injAt)}.` : "");
 </script>
