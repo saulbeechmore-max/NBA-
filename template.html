@@ -2,174 +2,158 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Saira+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Permanent+Marker&family=Saira+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: a coach's clipboard. Hardboard backing, metal clip, a dry-erase sheet with a half court
-   drawn on it. Services sit on the sheet; each opens into TV-style score bugs. One deliberate look. */
+/* Layout: a coach's clipboard lying on a basketball. The clipboard fills the screen top to bottom and
+   never grows; its contents scroll inside it. Services open into TV-style score bugs; game info is a
+   sticky note stuck under the bug. One deliberate look. */
 :root {
   color-scheme: light;
-  --board: #a8774a;          /* hardboard backing */
-  --board-dark: #8a5f38;
+  --ball: #5e2610;           /* dark basketball leather */
+  --ball-hi: #7a3414;
+  --seam: #1e0c05;
   --sheet: #fbfbf7;          /* dry-erase sheet */
-  --ink: #17202c;            /* marker black */
+  --ink: #17202c;
   --muted: #5c6675;
   --line: #e1e4e8;
-  --court: #c7d2de;          /* faint printed court lines */
+  --court: #c7d2de;
   --marker-red: #c8372d;
   --marker-blue: #2d5fc8;
-  --bug: #10151d;            /* score bug */
+  --bug: #10151d;
   --bug-2: #1b2330;
   --bug-fg: #f4f6fa;
   --bug-muted: #9aa5b6;
   --live: #e23b3b;
+  --note: #fde878;           /* sticky note */
+  --note-edge: #f2d55a;
+  --note-ink: #2b2410;
   --prime: #0a7fd9;
   --peacock: #6d4ae0;
   --espn: #d42a2a;
   --lp: #1d4f9c;
   --hand: "Permanent Marker", "Comic Sans MS", cursive;
+  --note-font: "Caveat", "Bradley Hand", "Comic Sans MS", cursive;
   --display: "Saira Condensed", "Arial Narrow", system-ui, sans-serif;
   --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
-html { background: var(--board); }
+html, body { height: 100%; }
+html { background: var(--ball); }
 body {
-  background-color: var(--board);
+  margin: 0; overflow: hidden;
+  background-color: var(--ball);
   background-image:
-    radial-gradient(circle at 20% 10%, rgba(255,255,255,.08), transparent 40%),
-    repeating-linear-gradient(90deg, rgba(0,0,0,.035) 0 2px, transparent 2px 7px),
-    repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 5px);
+    radial-gradient(ellipse at 30% 20%, rgba(255,140,60,.18), transparent 55%),
+    radial-gradient(circle, rgba(0,0,0,.28) 1.2px, transparent 1.6px),
+    radial-gradient(circle, rgba(255,255,255,.05) 1px, transparent 1.4px);
+  background-size: 100% 100%, 7px 7px, 7px 7px;
+  background-position: 0 0, 0 0, 3.5px 3.5px;
   color: var(--ink); font-family: var(--body); font-size: 16px;
-  padding-left: max(14px, env(safe-area-inset-left, 0px));
-  padding-right: max(14px, env(safe-area-inset-right, 0px));
-  padding-block: 34px 28px;
-  min-height: 100%;
+  padding-left: max(12px, env(safe-area-inset-left, 0px));
+  padding-right: max(12px, env(safe-area-inset-right, 0px));
+  padding-block: 30px 12px;
+  box-sizing: border-box;
 }
+.seams { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+
 .sheet {
-  position: relative; max-width: 540px; margin: 0 auto;
+  position: relative; z-index: 1; max-width: 540px; height: 100%; margin: 0 auto; box-sizing: border-box;
   background: var(--sheet); border-radius: 10px;
-  box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 10px 30px rgba(40,20,0,.35), 0 2px 4px rgba(40,20,0,.25);
-  padding: 58px 16px 22px; isolation: isolate;
+  box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 14px 34px rgba(0,0,0,.5), 0 2px 4px rgba(0,0,0,.35);
+  display: flex; flex-direction: column; isolation: isolate;
 }
 /* metal clip */
-.clip {
-  position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
-  width: 150px; height: 58px; z-index: 3; pointer-events: none;
-}
-.clip .plate {
-  position: absolute; inset: 14px 0 0; border-radius: 10px 10px 16px 16px;
+.clip { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); width: 130px; height: 56px; z-index: 3; pointer-events: none; }
+.clip .plate { position: absolute; inset: 14px 0 0; border-radius: 10px 10px 16px 16px;
   background: linear-gradient(180deg, #eef1f4, #b9c0c8 45%, #8d959e 55%, #c9cfd5);
-  box-shadow: 0 3px 6px rgba(0,0,0,.35), 0 1px 0 #fff inset;
-}
-.clip .ring {
-  position: absolute; left: 50%; top: 0; transform: translateX(-50%);
-  width: 54px; height: 30px; border: 6px solid #9aa2ab; border-bottom: none; border-radius: 30px 30px 0 0;
-  box-shadow: 0 -1px 0 #e3e7eb inset;
-}
-.clip .rivet { position: absolute; top: 34px; width: 10px; height: 10px; border-radius: 50%;
+  box-shadow: 0 3px 6px rgba(0,0,0,.35), 0 1px 0 #fff inset; }
+.clip .ring { position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 50px; height: 30px;
+  border: 6px solid #9aa2ab; border-bottom: none; border-radius: 30px 30px 0 0; }
+.clip .rivet { position: absolute; top: 33px; width: 10px; height: 10px; border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #fff, #8d959e 70%); }
-.clip .rivet.l { left: 22px; } .clip .rivet.r { right: 22px; }
-/* court drawn on the sheet */
-.court { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none; }
+.clip .rivet.l { left: 20px; } .clip .rivet.r { right: 20px; }
+.court { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none; border-radius: 10px; }
 
-header { text-align: center; display: grid; gap: 2px; transition: filter .25s, opacity .25s; }
-header h1 {
-  font-family: var(--hand); font-weight: 400; font-size: 2.5rem; line-height: 1.05; margin: 0;
-  color: var(--ink); letter-spacing: .01em; text-wrap: balance;
-}
-header p { margin: 0; color: var(--muted); font-size: .95rem; }
-header p b { color: var(--marker-red); font-weight: 600; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 14px 0; font-size: .82rem; color: var(--muted); min-height: 22px; transition: filter .25s, opacity .25s; }
+.top .count b { color: var(--marker-red); font-weight: 700; }
+header { text-align: center; padding: 18px 14px 4px; transition: filter .25s, opacity .25s; }
+header h1 { font-family: var(--hand); font-weight: 400; font-size: 2.5rem; line-height: 1.05; margin: 0; text-wrap: balance; }
 
-.services { display: grid; gap: 12px; margin-top: 20px; }
-.svc {
-  background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
-  box-shadow: 0 1px 2px rgba(23,32,44,.06);
-  transition: filter .25s, opacity .25s, transform .25s;
-}
-.svc > button.head {
-  all: unset; box-sizing: border-box; width: 100%; cursor: pointer;
+.scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px 14px 16px; -webkit-overflow-scrolling: touch; }
+.services { display: grid; gap: 12px; }
+.svc { background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+  box-shadow: 0 1px 2px rgba(23,32,44,.06); transition: filter .25s, opacity .25s; }
+.svc > button.head { all: unset; box-sizing: border-box; width: 100%; cursor: pointer;
   display: grid; grid-template-columns: 6px 1fr auto auto; align-items: center; gap: 14px;
-  padding: 14px 16px 14px 0; min-height: 70px;
-}
+  padding: 14px 16px 14px 0; min-height: 70px; }
 .svc > button.head:focus-visible { outline: 3px solid var(--c); outline-offset: -3px; border-radius: 14px; }
 .bar { align-self: stretch; background: var(--c); }
 .name { font-family: var(--display); font-weight: 800; font-size: 1.55rem; line-height: 1; text-transform: uppercase; letter-spacing: .02em; }
-.count { font-family: var(--display); font-weight: 800; font-size: 1.1rem; color: #fff; background: var(--c);
+.count-pill { font-family: var(--display); font-weight: 800; font-size: 1.1rem; color: #fff; background: var(--c);
   border-radius: 999px; padding: 3px 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .chev { width: 20px; height: 20px; color: var(--muted); transition: transform .2s; }
 .svc.open .chev { transform: rotate(180deg); }
 .games[hidden] { display: none; }
-.games { border-top: 1px solid var(--line); padding: 14px 12px 12px; display: grid; gap: 12px; background: #f6f7f9; }
-.note { color: var(--muted); font-size: .78rem; line-height: 1.45; text-align: center; }
+.games { border-top: 1px solid var(--line); padding: 14px 12px 12px; display: grid; gap: 14px; background: #f6f7f9; }
+.note-lp { color: var(--muted); font-size: .78rem; line-height: 1.45; text-align: center; }
 
 /* focus mode: one service open, the rest of the clipboard goes soft */
-.focus header, .focus footer, .focus .svc:not(.open) { filter: blur(3px); opacity: .45; }
-.focus .svc:not(.open):hover { opacity: .65; }
+.focus .top, .focus header, .focus .updated, .focus .svc:not(.open) { filter: blur(3px); opacity: .45; }
 
 /* score bug */
 .game { display: grid; }
-.bug {
-  all: unset; box-sizing: border-box; cursor: pointer; width: 100%;
+.bug { all: unset; box-sizing: border-box; cursor: pointer; width: 100%; position: relative; z-index: 2;
   display: grid; grid-template-columns: 1fr auto; border-radius: 10px; overflow: hidden;
-  background: var(--bug); color: var(--bug-fg);
-  box-shadow: 0 4px 10px rgba(16,21,29,.25);
-}
+  background: var(--bug); color: var(--bug-fg); box-shadow: 0 4px 10px rgba(16,21,29,.25); }
 .bug:focus-visible { outline: 3px solid var(--c); outline-offset: 2px; }
 .rows { display: grid; }
 .row { display: grid; grid-template-columns: 54px 1fr auto; align-items: center; min-height: 50px; }
 .row + .row { border-top: 1px solid rgba(255,255,255,.07); }
-.abbr {
-  align-self: stretch; display: grid; place-items: center;
-  font-family: var(--display); font-weight: 800; font-size: 1.05rem; letter-spacing: .04em;
-  background: var(--tc); color: var(--tf);
-}
+.abbr { align-self: stretch; display: grid; place-items: center; font-family: var(--display); font-weight: 800;
+  font-size: 1.05rem; letter-spacing: .04em; background: var(--tc); color: var(--tf); }
 .tname { padding: 6px 10px; min-width: 0; }
 .tname b { display: block; font-family: var(--display); font-weight: 700; font-size: 1.25rem; line-height: 1.05; text-transform: uppercase; letter-spacing: .02em; }
 .tname small { display: block; color: var(--bug-muted); font-size: .72rem; font-variant-numeric: tabular-nums; margin-top: 1px; }
 .score { font-family: var(--display); font-weight: 800; font-size: 1.6rem; padding: 0 12px; font-variant-numeric: tabular-nums; }
-.score.lead { color: #fff; } .score.trail { color: var(--bug-muted); }
-.status {
-  display: grid; align-content: center; justify-items: center; gap: 4px; min-width: 84px; padding: 8px 10px;
-  background: var(--bug-2); border-left: 1px solid rgba(255,255,255,.07); text-align: center;
-}
-.status .t { font-family: var(--display); font-weight: 700; font-size: 1.15rem; line-height: 1; white-space: nowrap; }
+.score.trail { color: var(--bug-muted); }
+.status { display: grid; align-content: center; justify-items: center; gap: 3px; min-width: 84px; padding: 8px 10px;
+  background: var(--bug-2); border-left: 1px solid rgba(255,255,255,.07); text-align: center; }
+.status .big { font-family: var(--display); font-weight: 800; font-size: 1.6rem; line-height: .95; white-space: nowrap; }
+.status .big.time { font-size: 1.15rem; font-weight: 700; }
+.status .small { font-family: var(--display); font-weight: 600; font-size: .95rem; color: var(--bug-muted); font-variant-numeric: tabular-nums; line-height: 1; }
 .status .z { font-size: .62rem; color: var(--bug-muted); letter-spacing: .08em; text-transform: uppercase; }
 .pill { font-size: .6rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; border-radius: 4px; padding: 2px 5px; background: rgba(255,255,255,.1); color: var(--bug-muted); white-space: nowrap; }
 .pill.live { background: var(--live); color: #fff; display: inline-flex; align-items: center; gap: 4px; }
 .pill.live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: blink 1.2s infinite; }
 @keyframes blink { 50% { opacity: .25; } }
-.foot {
-  grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 8px;
-  padding: 6px 10px; font-size: .72rem; color: var(--bug-muted); background: rgba(255,255,255,.04);
-  border-top: 1px solid rgba(255,255,255,.07);
-}
-.foot .outs { display: inline-flex; align-items: center; gap: 4px; color: var(--bug-fg); font-weight: 600; }
+.foot { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 28px;
+  padding: 5px 10px; font-size: .72rem; color: var(--bug-muted); background: rgba(255,255,255,.04); border-top: 1px solid rgba(255,255,255,.07); }
+.foot .info { display: inline-flex; align-items: center; gap: 4px; color: var(--bug-fg); font-weight: 600; margin-left: auto; }
 .foot svg { width: 13px; height: 13px; transition: transform .2s; }
 .game.open .foot svg { transform: rotate(180deg); }
-.game.done .bug { opacity: .6; }
+.game.done .bug { opacity: .65; }
 
-/* injury pop-out */
+/* sticky note */
 .inj[hidden] { display: none; }
-.inj {
-  margin: -6px 8px 0; padding: 14px 12px 10px; border-radius: 0 0 10px 10px;
-  background: #fff; border: 1px solid var(--line); border-top: none;
-  display: grid; gap: 8px; font-size: .8rem; line-height: 1.45;
-}
-.live-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-bottom: 8px; border-bottom: 1px dashed var(--line); }
-.live-line .pill.live { font-size: .62rem; }
-.live-line a { color: var(--marker-blue); font-weight: 600; text-decoration: none; }
-.live-line a:hover { text-decoration: underline; }
-.live-line .sc { font-family: var(--display); font-weight: 700; font-size: 1rem; }
+.inj { position: relative; z-index: 1; margin: -4px 14px 4px 22px; padding: 20px 14px 14px;
+  background: linear-gradient(180deg, var(--note) 0%, var(--note) 88%, var(--note-edge) 100%);
+  color: var(--note-ink); font-family: var(--note-font); font-size: 1.2rem; line-height: 1.15;
+  transform: rotate(-1.2deg); box-shadow: 0 8px 14px rgba(60,45,0,.25), 0 1px 2px rgba(60,45,0,.2);
+  border-radius: 2px 2px 14px 2px; display: grid; gap: 8px; }
+.inj::before { content: ""; position: absolute; top: -10px; left: 50%; transform: translateX(-50%) rotate(2deg);
+  width: 74px; height: 20px; background: rgba(255,255,255,.55); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.game:nth-child(even) .inj { transform: rotate(1deg); margin: -4px 22px 4px 14px; }
+.inj .total { font-family: var(--hand); font-size: 1.15rem; color: var(--marker-red); border-bottom: 2px solid rgba(43,36,16,.15); padding-bottom: 6px; }
 .inj b { font-weight: 700; }
-.inj .cnt { color: var(--muted); font-variant-numeric: tabular-nums; }
-.inj .who { color: var(--muted); }
+.inj .cnt { opacity: .7; }
+.inj .who { opacity: .85; }
 
 .empty { text-align: center; padding: 28px 8px 8px; display: grid; gap: 6px; }
 .empty .big { font-family: var(--hand); font-size: 1.6rem; }
 .empty p { margin: 0; color: var(--muted); font-size: .95rem; line-height: 1.45; }
 .empty strong { color: var(--ink); }
-
-footer { color: rgba(255,255,255,.85); font-size: .76rem; line-height: 1.5; text-align: center; margin-top: 14px; transition: filter .25s, opacity .25s; }
+.updated { color: var(--muted); font-size: .74rem; line-height: 1.5; text-align: center; margin-top: 16px; transition: filter .25s, opacity .25s; }
 @media (prefers-reduced-motion: reduce) {
-  .chev, .foot svg, .svc, header, footer { transition: none; }
+  .chev, .foot svg, .svc, header, .top, .updated { transition: none; }
   .pill.live::before { animation: none; }
 }
 @media (max-width: 380px) {
@@ -179,12 +163,20 @@ footer { color: rgba(255,255,255,.85); font-size: .76rem; line-height: 1.5; text
 }
 </style>
 
+<svg class="seams" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <g fill="none" stroke="var(--seam)" stroke-width="5" opacity=".55">
+    <path d="M-40 400 H440"/>
+    <path d="M200 -40 V840"/>
+    <path d="M60 -40 C150 200 150 600 60 840"/>
+    <path d="M340 -40 C250 200 250 600 340 840"/>
+  </g>
+</svg>
+
 <div class="sheet" id="sheet">
   <div class="clip" aria-hidden="true"><div class="ring"></div><div class="plate"></div><span class="rivet l"></span><span class="rivet r"></span></div>
   <svg class="court" viewBox="0 0 400 700" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
     <g fill="none" stroke="var(--court)" stroke-width="2.5" opacity=".55">
       <rect x="10" y="20" width="380" height="670" rx="6"/>
-      <line x1="10" y1="690" x2="390" y2="690"/>
       <rect x="140" y="500" width="120" height="190"/>
       <circle cx="200" cy="500" r="60"/>
       <path d="M40 690 V600 A170 170 0 0 1 360 600 V690"/>
@@ -199,13 +191,13 @@ footer { color: rgba(255,255,255,.85); font-size: .76rem; line-height: 1.5; text
     </g>
   </svg>
 
-  <header>
-    <h1>NBA Tonight</h1>
-    <p id="date"></p>
-  </header>
-  <section class="services" id="services"></section>
+  <div class="top"><span id="date"></span><span class="count" id="count"></span></div>
+  <header><h1>NBA Tonight</h1></header>
+  <div class="scroll" id="scroll">
+    <section class="services" id="services"></section>
+    <div class="updated" id="updated"></div>
+  </div>
 </div>
-<footer id="foot"></footer>
 
 <script>
 const DATA = /*DATA*/null;
@@ -232,31 +224,45 @@ const games = (DATA && DATA.games) || [];
 const TEAMS = (DATA && DATA.teams) || {};
 const tonight = games.filter(g => g.day === today);
 
-document.getElementById("date").innerHTML =
-  esc(dayLabel(today, { weekday: "long", month: "long", day: "numeric" })) + " · " +
-  (tonight.length ? `<b>${tonight.length} game${tonight.length === 1 ? "" : "s"}</b> tonight` : "No games tonight");
+document.getElementById("date").textContent = dayLabel(today, { weekday: "short", month: "short", day: "numeric" });
+document.getElementById("count").innerHTML = tonight.length
+  ? `<b>${tonight.length}</b> game${tonight.length === 1 ? "" : "s"}` : "No games";
 
-// Live / final / upcoming, judged from the scheduled tip-off on this device.
+// Live / final / upcoming: the last refresh's status wins; between refreshes, judge from the scheduled tip-off.
 function state(g) {
   if (g.state === "post") return "done";
+  if (g.state === "in") return "live";
   const start = new Date(g.start).getTime(), t = now.getTime();
   if (t >= start + 3 * 3600e3) return "done";
   if (t >= start) return "live";
   return "pre";
 }
 
-// Pick a readable block color for a team: its main color unless too light, then its alternate.
+function quarter(p) { return p > 4 ? (p === 5 ? "OT" : (p - 4) + "OT") : "Q" + p; }
+
+// The right-hand box: quarter and clock while live, Final after, tip-off time before.
+function statusBox(g, s) {
+  if (s === "done") return `<span class="big">FINAL</span>`;
+  if (s === "live") {
+    const d = (g.detail || "").toLowerCase();
+    if (g.state === "in" && d.includes("half")) return `<span class="big">HALF</span>`;
+    if (g.state === "in" && d.startsWith("end") && g.period) return `<span class="big">END</span><span class="small">${quarter(g.period)}</span>`;
+    if (g.state === "in" && g.period) return `<span class="big">${quarter(g.period)}</span><span class="small">${esc(g.clock || "")}</span>`;
+    return `<span class="big">Q1</span><span class="small">tip-off</span>`;
+  }
+  return `<span class="big time">${timeET(g.start)}</span><span class="z">ET</span>`;
+}
+
 function lum(h) { const n = parseInt(h.slice(1), 16); const c = [n >> 16, (n >> 8) & 255, n & 255].map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; }
 function teamColors(t) {
   let bg = hex(t.color);
-  if (lum(bg) < .012) bg = hex(t.alt) !== "#333333" && lum(hex(t.alt)) > .012 ? hex(t.alt) : "#2b3340"; // near-black blends into the bug
+  if (lum(bg) < .012) bg = lum(hex(t.alt)) > .012 ? hex(t.alt) : "#2b3340";
   return { bg, fg: lum(bg) > .45 ? "#10151d" : "#ffffff" };
 }
 
 function teamRow(t, other, showScore) {
   const c = teamColors(t);
-  const s = Number(t.score), o = Number(other.score);
-  const cls = showScore ? (s >= o ? "lead" : "trail") : "";
+  const cls = showScore && Number(t.score) < Number(other.score) ? "trail" : "";
   return `<div class="row">
     <div class="abbr" style="--tc:${c.bg};--tf:${c.fg}">${esc(t.abbr)}</div>
     <div class="tname"><b>${esc(t.name)}</b>${t.rec ? `<small>${esc(t.rec)}</small>` : ""}</div>
@@ -265,7 +271,7 @@ function teamRow(t, other, showScore) {
 }
 
 function injuries(name, t) {
-  if (!t) return `<div><b>${esc(name)}</b> <span class="cnt">injury report not available</span></div>`;
+  if (!t) return `<div><b>${esc(name)}</b> <span class="cnt">no injury report</span></div>`;
   const active = t.roster - t.out.length;
   return `<div><b>${esc(name)}</b> <span class="cnt">${active} of ${t.roster} active</span>
     <div class="who">${t.out.length ? t.out.map(n => esc(n) + " out").join(", ") : "Nobody out"}</div></div>`;
@@ -281,28 +287,16 @@ function gameBug(g) {
   const pills = [];
   if (g.cup) pills.push(`<span class="pill">NBA Cup</span>`);
   if (g.channel && !["Prime Video", "Peacock"].includes(g.channel)) pills.push(`<span class="pill">${esc(g.channel)}</span>`);
-  const statusTop = s === "live" ? `<span class="pill live">Live</span>`
-    : s === "done" ? `<span class="t">Final</span>`
-    : `<span class="t">${timeET(g.start)}</span><span class="z">ET</span>`;
-  const link = g.link && g.link.startsWith("https://") ? g.link : null;
-  let liveLine = "";
-  if (s === "live") {
-    liveLine = `<div class="live-line"><span class="pill live">Live now</span>
-      ${hasScore ? `<span class="sc">${esc(a.abbr)} ${esc(a.score)} – ${esc(h.score)} ${esc(h.abbr)}</span>` : ""}
-      ${link ? `<a href="${esc(link)}" target="_blank" rel="noopener">Live score on ESPN ↗</a>` : ""}</div>`;
-  } else if (s === "done" && link) {
-    liveLine = `<div class="live-line"><span class="pill">Final</span><a href="${esc(link)}" target="_blank" rel="noopener">Box score on ESPN ↗</a></div>`;
-  }
+  const left = s === "live" ? `<span class="pill live">Live now</span>` : s === "done" ? `<span class="pill">Final</span>` : "";
   return `<div class="game ${s === "done" ? "done" : ""}">
     <button type="button" class="bug" aria-expanded="false" aria-controls="${id}"
-      aria-label="${esc(a.name)} at ${esc(h.name)}, ${s === "live" ? "live now" : timeET(g.start)}. Show injuries.">
+      aria-label="${esc(a.name)} at ${esc(h.name)}${s === "live" ? ", live now" : ""}. Show game info.">
       <div class="rows">${teamRow(a, h, hasScore)}${teamRow(h, a, hasScore)}</div>
-      <div class="status">${statusTop}${pills.join("")}</div>
-      <div class="foot"><span>${a.abbr && h.abbr ? esc(a.abbr) + " @ " + esc(h.abbr) : ""}</span>
-        <span class="outs">${ta && th ? `${outs} player${outs === 1 ? "" : "s"} out` : "Injury report"} ${CHEV}</span></div>
+      <div class="status">${statusBox(g, s)}${pills.join("")}</div>
+      <div class="foot">${left}<span class="info">Game info ${CHEV}</span></div>
     </button>
     <div class="inj" id="${id}" hidden>
-      ${liveLine}
+      <div class="total">${ta && th ? `${outs} player${outs === 1 ? "" : "s"} out` : "Injury report"}</div>
       ${injuries(a.name, ta)}
       ${injuries(h.name, th)}
     </div>
@@ -323,7 +317,6 @@ function closeAll() {
     el.querySelector(".head").setAttribute("aria-expanded", "false");
   });
   sheet.classList.remove("focus");
-  document.body.classList.remove("focus");
 }
 
 for (const { svc, list } of shown) {
@@ -334,12 +327,12 @@ for (const { svc, list } of shown) {
     <button type="button" class="head" id="btn-${svc.id}" aria-expanded="false" aria-controls="list-${svc.id}">
       <span class="bar"></span>
       <span class="name">${svc.name}</span>
-      <span class="count">${list.length} game${list.length === 1 ? "" : "s"}</span>
+      <span class="count-pill">${list.length} game${list.length === 1 ? "" : "s"}</span>
       ${CHEV.replace("<svg", '<svg class="chev"')}
     </button>
     <div class="games" id="list-${svc.id}" hidden>
       ${list.map(gameBug).join("")}
-      ${svc.note ? `<div class="note">${svc.note}</div>` : ""}
+      ${svc.note ? `<div class="note-lp">${svc.note}</div>` : ""}
     </div>`;
   const head = el.querySelector(".head"), panel = el.querySelector(".games");
   head.addEventListener("click", e => {
@@ -351,7 +344,6 @@ for (const { svc, list } of shown) {
     panel.hidden = false;
     head.setAttribute("aria-expanded", "true");
     sheet.classList.add("focus");
-    document.body.classList.add("focus");
   });
   el.querySelectorAll(".bug").forEach(b => b.addEventListener("click", e => {
     e.stopPropagation();
@@ -365,7 +357,6 @@ for (const { svc, list } of shown) {
   wrap.appendChild(el);
 }
 
-// Tapping anywhere outside the open service closes it.
 document.addEventListener("click", () => { if (sheet.classList.contains("focus")) closeAll(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeAll(); });
 
@@ -377,7 +368,7 @@ if (!shown.length) {
 
 const updated = DATA && DATA.updated ? new Date(DATA.updated) : null;
 const lastDay = games.length ? games[games.length - 1].day : null;
-document.getElementById("foot").textContent =
+document.getElementById("updated").textContent =
   (lastDay && today > lastDay ? "This schedule is out of date. " : "") +
   "Times are Eastern. " +
   (updated ? `Updated ${updated.toLocaleString("en-US", { timeZone: tz, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.` : "");

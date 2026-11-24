@@ -110,6 +110,8 @@ def game_from_event(day_key, ev):
         "h": h,
         "state": status.get("state", "pre"),   # pre / in / post at build time
         "detail": status.get("shortDetail"),
+        "period": ev.get("status", {}).get("period"),
+        "clock": ev.get("status", {}).get("displayClock"),
         "link": link,
         "service": service,
         "channel": channel,
