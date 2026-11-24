@@ -82,13 +82,35 @@ def game_from_event(day_key, ev):
     if service == "leaguepass" and national:
         channel = national[0]  # e.g. NBA TV
     notes = " ".join(n.get("headline", "") for n in comp.get("notes", []))
+    status = ev.get("status", {}).get("type", {})
+
+    def team(c):
+        t = c["team"]
+        rec = next((r.get("summary") for r in c.get("records") or [] if r.get("type") == "total"), None)
+        return {
+            "id": t["id"],
+            "name": t["name"],
+            "abbr": t.get("abbreviation", ""),
+            "color": t.get("color") or "333333",
+            "alt": t.get("alternateColor") or "777777",
+            "rec": rec,
+            "score": c.get("score"),
+        }
+
+    link = next((l.get("href") for l in ev.get("links", []) if (l.get("href") or "").startswith("https://www.espn.com/")), None)
+    a, h = team(side["away"]), team(side["home"])
     return {
         "day": day_key,
         "start": ev["date"],
-        "awayId": side["away"]["team"]["id"],
-        "homeId": side["home"]["team"]["id"],
-        "away": side["away"]["team"]["name"],
-        "home": side["home"]["team"]["name"],
+        "awayId": a["id"],
+        "homeId": h["id"],
+        "away": a["name"],
+        "home": h["name"],
+        "a": a,
+        "h": h,
+        "state": status.get("state", "pre"),   # pre / in / post at build time
+        "detail": status.get("shortDetail"),
+        "link": link,
         "service": service,
         "channel": channel,
         "cup": "NBA Cup" in notes,

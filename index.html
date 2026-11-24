@@ -2,208 +2,377 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Saira+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: one narrow column; four service rows that open in place to show tonight's games. */
+/* Layout: a coach's clipboard. Hardboard backing, metal clip, a dry-erase sheet with a half court
+   drawn on it. Services sit on the sheet; each opens into TV-style score bugs. One deliberate look. */
 :root {
-  --bg: #f3f4f7;
-  --card: #ffffff;
-  --fg: #151923;
-  --muted: #5d6577;
-  --line: #dfe2ea;
+  color-scheme: light;
+  --board: #a8774a;          /* hardboard backing */
+  --board-dark: #8a5f38;
+  --sheet: #fbfbf7;          /* dry-erase sheet */
+  --ink: #17202c;            /* marker black */
+  --muted: #5c6675;
+  --line: #e1e4e8;
+  --court: #c7d2de;          /* faint printed court lines */
+  --marker-red: #c8372d;
+  --marker-blue: #2d5fc8;
+  --bug: #10151d;            /* score bug */
+  --bug-2: #1b2330;
+  --bug-fg: #f4f6fa;
+  --bug-muted: #9aa5b6;
+  --live: #e23b3b;
   --prime: #0a7fd9;
   --peacock: #6d4ae0;
   --espn: #d42a2a;
   --lp: #1d4f9c;
-  --live: #0f9d58;
+  --hand: "Permanent Marker", "Comic Sans MS", cursive;
   --display: "Saira Condensed", "Arial Narrow", system-ui, sans-serif;
   --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #10131a; --card: #191d27; --fg: #eef0f5; --muted: #9aa2b4; --line: #2a303d;
-    --prime: #3ea6ff; --peacock: #9d83ff; --espn: #ff5d5d; --lp: #6f9dff; --live: #35c97f;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #10131a; --card: #191d27; --fg: #eef0f5; --muted: #9aa2b4; --line: #2a303d;
-  --prime: #3ea6ff; --peacock: #9d83ff; --espn: #ff5d5d; --lp: #6f9dff; --live: #35c97f;
-  color-scheme: dark;
-}
+html { background: var(--board); }
 body {
-  background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 20px 40px;
+  background-color: var(--board);
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(255,255,255,.08), transparent 40%),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.035) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 5px);
+  color: var(--ink); font-family: var(--body); font-size: 16px;
+  padding-left: max(14px, env(safe-area-inset-left, 0px));
+  padding-right: max(14px, env(safe-area-inset-right, 0px));
+  padding-block: 34px 28px;
+  min-height: 100%;
 }
-main { max-width: 520px; margin: 0 auto; display: grid; gap: 20px; }
+.sheet {
+  position: relative; max-width: 540px; margin: 0 auto;
+  background: var(--sheet); border-radius: 10px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 10px 30px rgba(40,20,0,.35), 0 2px 4px rgba(40,20,0,.25);
+  padding: 58px 16px 22px; isolation: isolate;
+}
+/* metal clip */
+.clip {
+  position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+  width: 150px; height: 58px; z-index: 3; pointer-events: none;
+}
+.clip .plate {
+  position: absolute; inset: 14px 0 0; border-radius: 10px 10px 16px 16px;
+  background: linear-gradient(180deg, #eef1f4, #b9c0c8 45%, #8d959e 55%, #c9cfd5);
+  box-shadow: 0 3px 6px rgba(0,0,0,.35), 0 1px 0 #fff inset;
+}
+.clip .ring {
+  position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+  width: 54px; height: 30px; border: 6px solid #9aa2ab; border-bottom: none; border-radius: 30px 30px 0 0;
+  box-shadow: 0 -1px 0 #e3e7eb inset;
+}
+.clip .rivet { position: absolute; top: 34px; width: 10px; height: 10px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff, #8d959e 70%); }
+.clip .rivet.l { left: 22px; } .clip .rivet.r { right: 22px; }
+/* court drawn on the sheet */
+.court { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none; }
+
+header { text-align: center; display: grid; gap: 2px; transition: filter .25s, opacity .25s; }
 header h1 {
-  font-family: var(--display); font-weight: 700; font-size: 2.4rem; line-height: 1;
-  margin: 0; letter-spacing: .01em; text-transform: uppercase;
+  font-family: var(--hand); font-weight: 400; font-size: 2.5rem; line-height: 1.05; margin: 0;
+  color: var(--ink); letter-spacing: .01em; text-wrap: balance;
 }
-header p { margin: 6px 0 0; color: var(--muted); font-size: .95rem; }
-.services { display: grid; gap: 10px; }
+header p { margin: 0; color: var(--muted); font-size: .95rem; }
+header p b { color: var(--marker-red); font-weight: 600; }
+
+.services { display: grid; gap: 12px; margin-top: 20px; }
 .svc {
-  background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+  background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+  box-shadow: 0 1px 2px rgba(23,32,44,.06);
+  transition: filter .25s, opacity .25s, transform .25s;
 }
-.svc > button {
+.svc > button.head {
   all: unset; box-sizing: border-box; width: 100%; cursor: pointer;
   display: grid; grid-template-columns: 6px 1fr auto auto; align-items: center; gap: 14px;
-  padding: 16px 16px 16px 0; min-height: 76px;
+  padding: 14px 16px 14px 0; min-height: 70px;
 }
-.svc > button:focus-visible { outline: 2px solid var(--c); outline-offset: -2px; border-radius: 14px; }
+.svc > button.head:focus-visible { outline: 3px solid var(--c); outline-offset: -3px; border-radius: 14px; }
 .bar { align-self: stretch; background: var(--c); }
-.name { font-family: var(--display); font-weight: 700; font-size: 1.5rem; line-height: 1.1; text-transform: uppercase; letter-spacing: .02em; }
-.sub { display: block; font-family: var(--body); font-weight: 400; font-size: .85rem; color: var(--muted); text-transform: none; letter-spacing: 0; margin-top: 2px; }
-.count { font-family: var(--display); font-weight: 700; font-size: 2rem; color: var(--c); font-variant-numeric: tabular-nums; min-width: 1.2ch; text-align: right; }
-.count.zero { color: var(--muted); opacity: .6; }
+.name { font-family: var(--display); font-weight: 800; font-size: 1.55rem; line-height: 1; text-transform: uppercase; letter-spacing: .02em; }
+.count { font-family: var(--display); font-weight: 800; font-size: 1.1rem; color: #fff; background: var(--c);
+  border-radius: 999px; padding: 3px 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .chev { width: 20px; height: 20px; color: var(--muted); transition: transform .2s; }
 .svc.open .chev { transform: rotate(180deg); }
 .games[hidden] { display: none; }
-.games { border-top: 1px solid var(--line); padding: 4px 16px 8px 22px; display: grid; }
-.game { display: grid; grid-template-columns: 5.2rem 1fr; gap: 12px; align-items: baseline; padding: 12px 0; }
-.game + .game { border-top: 1px solid var(--line); }
-.time { font-family: var(--display); font-weight: 600; font-size: 1.2rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.teams { font-weight: 600; font-size: 1.02rem; min-width: 0; }
-.teams .at { color: var(--muted); font-weight: 400; margin: 0 .3em; }
-.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-.tag { font-size: .72rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; }
-.tag.live { color: var(--live); border-color: var(--live); }
-.game.done { opacity: .5; }
-.game > button { all: unset; box-sizing: border-box; cursor: pointer; display: contents; }
-.game > button:focus-visible .teams { outline: 2px solid var(--c); outline-offset: 3px; border-radius: 4px; }
-.avail { display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.avail svg { width: 14px; height: 14px; transition: transform .2s; }
-.game.open .avail svg { transform: rotate(180deg); }
-.roster { grid-column: 2; display: grid; gap: 8px; margin-top: 2px; padding: 10px 12px; border-radius: 10px; background: var(--bg); font-size: .82rem; line-height: 1.45; }
-.roster[hidden] { display: none; }
-.roster b { font-weight: 600; }
-.roster .cnt { color: var(--muted); font-variant-numeric: tabular-nums; }
-.roster .outs { color: var(--muted); }
+.games { border-top: 1px solid var(--line); padding: 14px 12px 12px; display: grid; gap: 12px; background: #f6f7f9; }
+.note { color: var(--muted); font-size: .78rem; line-height: 1.45; text-align: center; }
 
-.empty { padding: 14px 0; color: var(--muted); font-size: .95rem; line-height: 1.45; }
-.empty strong { color: var(--fg); font-weight: 600; }
-.note { color: var(--muted); font-size: .8rem; line-height: 1.5; padding: 0 0 10px; }
-footer { color: var(--muted); font-size: .8rem; line-height: 1.5; }
-@media (prefers-reduced-motion: reduce) { .chev, .avail svg { transition: none; } }
+/* focus mode: one service open, the rest of the clipboard goes soft */
+.focus header, .focus footer, .focus .svc:not(.open) { filter: blur(3px); opacity: .45; }
+.focus .svc:not(.open):hover { opacity: .65; }
+
+/* score bug */
+.game { display: grid; }
+.bug {
+  all: unset; box-sizing: border-box; cursor: pointer; width: 100%;
+  display: grid; grid-template-columns: 1fr auto; border-radius: 10px; overflow: hidden;
+  background: var(--bug); color: var(--bug-fg);
+  box-shadow: 0 4px 10px rgba(16,21,29,.25);
+}
+.bug:focus-visible { outline: 3px solid var(--c); outline-offset: 2px; }
+.rows { display: grid; }
+.row { display: grid; grid-template-columns: 54px 1fr auto; align-items: center; min-height: 50px; }
+.row + .row { border-top: 1px solid rgba(255,255,255,.07); }
+.abbr {
+  align-self: stretch; display: grid; place-items: center;
+  font-family: var(--display); font-weight: 800; font-size: 1.05rem; letter-spacing: .04em;
+  background: var(--tc); color: var(--tf);
+}
+.tname { padding: 6px 10px; min-width: 0; }
+.tname b { display: block; font-family: var(--display); font-weight: 700; font-size: 1.25rem; line-height: 1.05; text-transform: uppercase; letter-spacing: .02em; }
+.tname small { display: block; color: var(--bug-muted); font-size: .72rem; font-variant-numeric: tabular-nums; margin-top: 1px; }
+.score { font-family: var(--display); font-weight: 800; font-size: 1.6rem; padding: 0 12px; font-variant-numeric: tabular-nums; }
+.score.lead { color: #fff; } .score.trail { color: var(--bug-muted); }
+.status {
+  display: grid; align-content: center; justify-items: center; gap: 4px; min-width: 84px; padding: 8px 10px;
+  background: var(--bug-2); border-left: 1px solid rgba(255,255,255,.07); text-align: center;
+}
+.status .t { font-family: var(--display); font-weight: 700; font-size: 1.15rem; line-height: 1; white-space: nowrap; }
+.status .z { font-size: .62rem; color: var(--bug-muted); letter-spacing: .08em; text-transform: uppercase; }
+.pill { font-size: .6rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; border-radius: 4px; padding: 2px 5px; background: rgba(255,255,255,.1); color: var(--bug-muted); white-space: nowrap; }
+.pill.live { background: var(--live); color: #fff; display: inline-flex; align-items: center; gap: 4px; }
+.pill.live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: blink 1.2s infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+.foot {
+  grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 6px 10px; font-size: .72rem; color: var(--bug-muted); background: rgba(255,255,255,.04);
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+.foot .outs { display: inline-flex; align-items: center; gap: 4px; color: var(--bug-fg); font-weight: 600; }
+.foot svg { width: 13px; height: 13px; transition: transform .2s; }
+.game.open .foot svg { transform: rotate(180deg); }
+.game.done .bug { opacity: .6; }
+
+/* injury pop-out */
+.inj[hidden] { display: none; }
+.inj {
+  margin: -6px 8px 0; padding: 14px 12px 10px; border-radius: 0 0 10px 10px;
+  background: #fff; border: 1px solid var(--line); border-top: none;
+  display: grid; gap: 8px; font-size: .8rem; line-height: 1.45;
+}
+.live-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-bottom: 8px; border-bottom: 1px dashed var(--line); }
+.live-line .pill.live { font-size: .62rem; }
+.live-line a { color: var(--marker-blue); font-weight: 600; text-decoration: none; }
+.live-line a:hover { text-decoration: underline; }
+.live-line .sc { font-family: var(--display); font-weight: 700; font-size: 1rem; }
+.inj b { font-weight: 700; }
+.inj .cnt { color: var(--muted); font-variant-numeric: tabular-nums; }
+.inj .who { color: var(--muted); }
+
+.empty { text-align: center; padding: 28px 8px 8px; display: grid; gap: 6px; }
+.empty .big { font-family: var(--hand); font-size: 1.6rem; }
+.empty p { margin: 0; color: var(--muted); font-size: .95rem; line-height: 1.45; }
+.empty strong { color: var(--ink); }
+
+footer { color: rgba(255,255,255,.85); font-size: .76rem; line-height: 1.5; text-align: center; margin-top: 14px; transition: filter .25s, opacity .25s; }
+@media (prefers-reduced-motion: reduce) {
+  .chev, .foot svg, .svc, header, footer { transition: none; }
+  .pill.live::before { animation: none; }
+}
+@media (max-width: 380px) {
+  .row { grid-template-columns: 46px 1fr auto; }
+  .status { min-width: 72px; }
+  header h1 { font-size: 2.1rem; }
+}
 </style>
 
-<main>
+<div class="sheet" id="sheet">
+  <div class="clip" aria-hidden="true"><div class="ring"></div><div class="plate"></div><span class="rivet l"></span><span class="rivet r"></span></div>
+  <svg class="court" viewBox="0 0 400 700" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <g fill="none" stroke="var(--court)" stroke-width="2.5" opacity=".55">
+      <rect x="10" y="20" width="380" height="670" rx="6"/>
+      <line x1="10" y1="690" x2="390" y2="690"/>
+      <rect x="140" y="500" width="120" height="190"/>
+      <circle cx="200" cy="500" r="60"/>
+      <path d="M40 690 V600 A170 170 0 0 1 360 600 V690"/>
+      <circle cx="200" cy="655" r="9"/>
+      <line x1="178" y1="668" x2="222" y2="668"/>
+      <path d="M140 20 A60 60 0 0 0 260 20"/>
+    </g>
+    <g fill="none" stroke-linecap="round" stroke-width="3" opacity=".22">
+      <g stroke="var(--marker-red)"><path d="M70 430 l18 18 M88 430 l-18 18"/><path d="M300 380 l18 18 M318 380 l-18 18"/><path d="M180 300 l18 18 M198 300 l-18 18"/></g>
+      <g stroke="var(--marker-blue)"><circle cx="110" cy="560" r="11"/><circle cx="292" cy="540" r="11"/><circle cx="200" cy="440" r="11"/>
+        <path d="M120 552 C170 500 230 520 282 535" stroke-dasharray="7 7"/><path d="M276 530 l8 6 -10 3"/></g>
+    </g>
+  </svg>
+
   <header>
     <h1>NBA Tonight</h1>
     <p id="date"></p>
   </header>
   <section class="services" id="services"></section>
-  <footer id="foot"></footer>
-</main>
+</div>
+<footer id="foot"></footer>
 
 <script>
-const DATA = {"updated":"2026-11-23T17:44-05:00","games":[{"day":"2026-11-23","start":"2026-11-24T00:00Z","awayId":"29","homeId":"30","away":"Grizzlies","home":"Hornets","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-23","start":"2026-11-24T00:00Z","awayId":"22","homeId":"20","away":"Trail Blazers","home":"76ers","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-23","start":"2026-11-24T00:30Z","awayId":"25","homeId":"11","away":"Thunder","home":"Pacers","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-23","start":"2026-11-24T00:30Z","awayId":"15","homeId":"28","away":"Bucks","home":"Raptors","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-23","start":"2026-11-24T00:30Z","awayId":"17","homeId":"16","away":"Nets","home":"Timberwolves","service":"peacock","channel":"NBCSN","cup":false},{"day":"2026-11-23","start":"2026-11-24T01:00Z","awayId":"5","homeId":"4","away":"Cavaliers","home":"Bulls","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-23","start":"2026-11-24T01:00Z","awayId":"21","homeId":"3","away":"Suns","home":"Pelicans","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-23","start":"2026-11-24T01:30Z","awayId":"12","homeId":"10","away":"Clippers","home":"Rockets","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-23","start":"2026-11-24T03:00Z","awayId":"26","homeId":"13","away":"Jazz","home":"Lakers","service":"leaguepass","channel":"NBA TV","cup":false},{"day":"2026-11-23","start":"2026-11-24T03:00Z","awayId":"24","homeId":"23","away":"Spurs","home":"Kings","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-24","start":"2026-11-25T00:00Z","awayId":"8","homeId":"19","away":"Pistons","home":"Magic","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-24","start":"2026-11-25T01:00Z","awayId":"2","homeId":"27","away":"Celtics","home":"Wizards","service":"peacock","channel":"NBC","cup":true},{"day":"2026-11-24","start":"2026-11-25T03:00Z","awayId":"6","homeId":"7","away":"Mavericks","home":"Nuggets","service":"peacock","channel":"NBC","cup":true},{"day":"2026-11-25","start":"2026-11-25T22:00Z","awayId":"14","homeId":"20","away":"Heat","home":"76ers","service":"espn","channel":"ESPN","cup":true},{"day":"2026-11-25","start":"2026-11-26T00:00Z","awayId":"4","homeId":"30","away":"Bulls","home":"Hornets","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-25","start":"2026-11-26T00:30Z","awayId":"5","homeId":"18","away":"Cavaliers","home":"Knicks","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-25","start":"2026-11-26T00:30Z","awayId":"16","homeId":"25","away":"Timberwolves","home":"Thunder","service":"espn","channel":"ESPN","cup":true},{"day":"2026-11-25","start":"2026-11-26T01:00Z","awayId":"12","homeId":"29","away":"Clippers","home":"Grizzlies","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-25","start":"2026-11-26T01:00Z","awayId":"17","homeId":"15","away":"Nets","home":"Bucks","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-25","start":"2026-11-26T01:30Z","awayId":"21","homeId":"10","away":"Suns","home":"Rockets","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-25","start":"2026-11-26T03:00Z","awayId":"23","homeId":"9","away":"Kings","home":"Warriors","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-25","start":"2026-11-26T03:00Z","awayId":"24","homeId":"22","away":"Spurs","home":"Trail Blazers","service":"espn","channel":"ESPN","cup":true},{"day":"2026-11-27","start":"2026-11-28T00:00Z","awayId":"14","homeId":"18","away":"Heat","home":"Knicks","service":"prime","channel":"Prime Video","cup":true},{"day":"2026-11-27","start":"2026-11-28T00:30Z","awayId":"15","homeId":"8","away":"Bucks","home":"Pistons","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-27","start":"2026-11-28T00:30Z","awayId":"20","homeId":"11","away":"76ers","home":"Pacers","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-27","start":"2026-11-28T00:30Z","awayId":"17","homeId":"28","away":"Nets","home":"Raptors","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-27","start":"2026-11-28T01:00Z","awayId":"1","homeId":"2","away":"Hawks","home":"Celtics","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-27","start":"2026-11-28T01:30Z","awayId":"29","homeId":"16","away":"Grizzlies","home":"Timberwolves","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-27","start":"2026-11-28T02:00Z","awayId":"6","homeId":"21","away":"Mavericks","home":"Suns","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-27","start":"2026-11-28T02:30Z","awayId":"13","homeId":"24","away":"Lakers","home":"Spurs","service":"prime","channel":"Prime Video","cup":true},{"day":"2026-11-27","start":"2026-11-28T02:30Z","awayId":"7","homeId":"26","away":"Nuggets","home":"Jazz","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-27","start":"2026-11-28T02:30Z","awayId":"3","homeId":"12","away":"Pelicans","home":"Clippers","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-27","start":"2026-11-28T02:30Z","awayId":"9","homeId":"22","away":"Warriors","home":"Trail Blazers","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-28","start":"2026-11-28T22:00Z","awayId":"19","homeId":"27","away":"Magic","home":"Wizards","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-28","start":"2026-11-28T23:00Z","awayId":"17","homeId":"30","away":"Nets","home":"Hornets","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-28","start":"2026-11-29T01:00Z","awayId":"11","homeId":"4","away":"Pacers","home":"Bulls","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-28","start":"2026-11-29T01:00Z","awayId":"25","homeId":"15","away":"Thunder","home":"Bucks","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-28","start":"2026-11-29T01:30Z","awayId":"20","homeId":"10","away":"76ers","home":"Rockets","service":"leaguepass","channel":"NBA TV","cup":false},{"day":"2026-11-29","start":"2026-11-29T20:30Z","awayId":"14","homeId":"5","away":"Heat","home":"Cavaliers","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-29","start":"2026-11-29T21:00Z","awayId":"13","homeId":"29","away":"Lakers","home":"Grizzlies","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-29","start":"2026-11-29T21:00Z","awayId":"2","homeId":"24","away":"Celtics","home":"Spurs","service":"leaguepass","channel":"NBA TV","cup":false},{"day":"2026-11-29","start":"2026-11-29T22:00Z","awayId":"21","homeId":"26","away":"Suns","home":"Jazz","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-29","start":"2026-11-29T23:00Z","awayId":"19","homeId":"8","away":"Magic","home":"Pistons","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-29","start":"2026-11-29T23:00Z","awayId":"1","homeId":"18","away":"Hawks","home":"Knicks","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-29","start":"2026-11-29T23:00Z","awayId":"7","homeId":"28","away":"Nuggets","home":"Raptors","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-29","start":"2026-11-29T23:00Z","awayId":"3","homeId":"22","away":"Pelicans","home":"Trail Blazers","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-29","start":"2026-11-30T01:30Z","awayId":"12","homeId":"9","away":"Clippers","home":"Warriors","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-29","start":"2026-11-30T02:00Z","awayId":"16","homeId":"23","away":"Timberwolves","home":"Kings","service":"leaguepass","channel":null,"cup":false}],"teams":{"1":{"roster":18,"out":["C. McCollum","J. Landale","A. Newell","M. Gueye","H. Veesaar"]},"10":{"roster":17,"out":[]},"11":{"roster":17,"out":["T. Haliburton","T.J. McConnell","A. Nesmith","B. Sheppard","J. Furphy"]},"12":{"roster":19,"out":["B. Beal","J. Miller"]},"13":{"roster":19,"out":["A. Reaves"]},"14":{"roster":17,"out":[]},"15":{"roster":18,"out":[]},"16":{"roster":17,"out":["A. Edwards","D. DiVincenzo","J. Clark"]},"17":{"roster":18,"out":["N. Traore"]},"18":{"roster":17,"out":["J. Clarkson"]},"19":{"roster":17,"out":["P. Banchero","J. Isaac","N. Penda","I. Nelson"]},"2":{"roster":17,"out":["M. Robinson"]},"20":{"roster":17,"out":["A. Bona","A. Hukporti"]},"21":{"roster":17,"out":["M. Williams"]},"22":{"roster":17,"out":["J. Morant","S. Sharpe","V. Krejci","C. Youngblood"]},"23":{"roster":18,"out":["B. Simmons","M. Raynaud"]},"24":{"roster":17,"out":["T. Harris","D. Harper","J. Quaintance"]},"25":{"roster":18,"out":["C. Holmgren","J. Williams","A. Caruso","J. Williams","C. Wallace","N. Topic","T. Sorber","A. Mara"]},"26":{"roster":18,"out":["J. Jackson Jr.","L. Markkanen","J. Nurkic","J. Hayes"]},"27":{"roster":18,"out":["T. Vukcevic","J. Champagnie","J. Watkins","R. Beekman"]},"28":{"roster":17,"out":["K. Leonard","R. Barrett","N. Bittle"]},"29":{"roster":18,"out":["J. Grant","S. Pippen Jr.","G. Jackson","C. Boozer","R. Saunders"]},"3":{"roster":18,"out":["D. Murray","B. Mathurin","T. Watford"]},"30":{"roster":18,"out":["G. Allen","D. Schroder","G. Williams","K. Knueppel"]},"4":{"roster":18,"out":["N. Powell","C. Wilson"]},"5":{"roster":18,"out":["E. Mobley","J. Tyson","N. Tomlin"]},"6":{"roster":18,"out":["D. Lively II","T. Biberovic","S. de Larrea","T. Lawal"]},"7":{"roster":17,"out":["J. Strawther"]},"8":{"roster":18,"out":["D. Robinson","T. Prince","J. Duren","E. Okorie"]},"9":{"roster":18,"out":["S. Curry","J. Butler III","K. Porzingis","M. Moody","B. Williams"]}}};
+const DATA = {"updated":"2026-11-23T21:48-05:00","games":[{"day":"2026-11-23","start":"2026-11-24T00:00Z","awayId":"29","homeId":"30","away":"Grizzlies","home":"Hornets","a":{"id":"29","name":"Grizzlies","abbr":"MEM","color":"5d76a9","alt":"12173f","rec":"13-5","score":"117"},"h":{"id":"30","name":"Hornets","abbr":"CHA","color":"008ca8","alt":"1d1060","rec":"4-12","score":"111"},"state":"post","detail":"Final","link":"https://www.espn.com/nba/game/_/gameId/401910036/grizzlies-hornets","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-23","start":"2026-11-24T00:00Z","awayId":"22","homeId":"20","away":"Trail Blazers","home":"76ers","a":{"id":"22","name":"Trail Blazers","abbr":"POR","color":"e03a3e","alt":"000000","rec":"11-6","score":"128"},"h":{"id":"20","name":"76ers","abbr":"PHI","color":"1d428a","alt":"e01234","rec":"14-4","score":"111"},"state":"post","detail":"Final","link":"https://www.espn.com/nba/game/_/gameId/401910037/trail-blazers-76ers","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-23","start":"2026-11-24T00:30Z","awayId":"25","homeId":"11","away":"Thunder","home":"Pacers","a":{"id":"25","name":"Thunder","abbr":"OKC","color":"007ac1","alt":"ef3b24","rec":"10-7","score":"119"},"h":{"id":"11","name":"Pacers","abbr":"IND","color":"0c2340","alt":"ffd520","rec":"5-12","score":"123"},"state":"in","detail":"44.4 - 4th","link":"https://www.espn.com/nba/game?gameId=401910038","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-23","start":"2026-11-24T00:30Z","awayId":"15","homeId":"28","away":"Bucks","home":"Raptors","a":{"id":"15","name":"Bucks","abbr":"MIL","color":"00471b","alt":"eee1c6","rec":"1-16","score":"98"},"h":{"id":"28","name":"Raptors","abbr":"TOR","color":"d91244","alt":"000000","rec":"6-10","score":"98"},"state":"in","detail":"5:11 - 4th","link":"https://www.espn.com/nba/game?gameId=401910039","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-23","start":"2026-11-24T00:30Z","awayId":"17","homeId":"16","away":"Nets","home":"Timberwolves","a":{"id":"17","name":"Nets","abbr":"BKN","color":"000000","alt":"ffffff","rec":"3-12","score":"112"},"h":{"id":"16","name":"Timberwolves","abbr":"MIN","color":"266092","alt":"79bc43","rec":"12-5","score":"128"},"state":"in","detail":"5:35 - 4th","link":"https://www.espn.com/nba/game?gameId=401910040","service":"peacock","channel":"NBCSN","cup":false},{"day":"2026-11-23","start":"2026-11-24T01:00Z","awayId":"5","homeId":"4","away":"Cavaliers","home":"Bulls","a":{"id":"5","name":"Cavaliers","abbr":"CLE","color":"860038","alt":"bc945c","rec":"9-8","score":"83"},"h":{"id":"4","name":"Bulls","abbr":"CHI","color":"ce1141","alt":"000000","rec":"4-12","score":"89"},"state":"in","detail":"1:52 - 3rd","link":"https://www.espn.com/nba/game?gameId=401910041","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-23","start":"2026-11-24T01:00Z","awayId":"21","homeId":"3","away":"Suns","home":"Pelicans","a":{"id":"21","name":"Suns","abbr":"PHX","color":"29127a","alt":"e56020","rec":"8-7","score":"73"},"h":{"id":"3","name":"Pelicans","abbr":"NO","color":"0a2240","alt":"b4975a","rec":"5-13","score":"75"},"state":"in","detail":"2:26 - 3rd","link":"https://www.espn.com/nba/game?gameId=401910042","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-23","start":"2026-11-24T01:30Z","awayId":"12","homeId":"10","away":"Clippers","home":"Rockets","a":{"id":"12","name":"Clippers","abbr":"LAC","color":"12173f","alt":"c8102e","rec":"4-11","score":"43"},"h":{"id":"10","name":"Rockets","abbr":"HOU","color":"ce0e2d","alt":"000000","rec":"12-5","score":"47"},"state":"in","detail":"Halftime","link":"https://www.espn.com/nba/game?gameId=401910043","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-23","start":"2026-11-24T03:00Z","awayId":"26","homeId":"13","away":"Jazz","home":"Lakers","a":{"id":"26","name":"Jazz","abbr":"UTAH","color":"4e008e","alt":"79a3dc","rec":"3-15","score":"0"},"h":{"id":"13","name":"Lakers","abbr":"LAL","color":"552583","alt":"fdb927","rec":"14-3","score":"0"},"state":"pre","detail":"11/23 - 10:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910044/jazz-lakers","service":"leaguepass","channel":"NBA TV","cup":false},{"day":"2026-11-23","start":"2026-11-24T03:00Z","awayId":"24","homeId":"23","away":"Spurs","home":"Kings","a":{"id":"24","name":"Spurs","abbr":"SA","color":"000000","alt":"c4ced4","rec":"14-3","score":"0"},"h":{"id":"23","name":"Kings","abbr":"SAC","color":"5a2d81","alt":"6a7a82","rec":"2-14","score":"0"},"state":"pre","detail":"11/23 - 10:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910045/spurs-kings","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-24","start":"2026-11-25T00:00Z","awayId":"8","homeId":"19","away":"Pistons","home":"Magic","a":{"id":"8","name":"Pistons","abbr":"DET","color":"1d428a","alt":"c8102e","rec":"10-6","score":"0"},"h":{"id":"19","name":"Magic","abbr":"ORL","color":"0150b5","alt":"9ca0a3","rec":"7-9","score":"0"},"state":"pre","detail":"11/24 - 7:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909314/pistons-magic","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-24","start":"2026-11-25T01:00Z","awayId":"2","homeId":"27","away":"Celtics","home":"Wizards","a":{"id":"2","name":"Celtics","abbr":"BOS","color":"008348","alt":"ffffff","rec":"11-6","score":"0"},"h":{"id":"27","name":"Wizards","abbr":"WSH","color":"e31837","alt":"002b5c","rec":"7-11","score":"0"},"state":"pre","detail":"11/24 - 8:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909315/celtics-wizards","service":"peacock","channel":"NBC","cup":true},{"day":"2026-11-24","start":"2026-11-25T03:00Z","awayId":"6","homeId":"7","away":"Mavericks","home":"Nuggets","a":{"id":"6","name":"Mavericks","abbr":"DAL","color":"0064b1","alt":"bbc4ca","rec":"10-7","score":"0"},"h":{"id":"7","name":"Nuggets","abbr":"DEN","color":"0e2240","alt":"fec524","rec":"10-5","score":"0"},"state":"pre","detail":"11/24 - 10:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909316/mavericks-nuggets","service":"peacock","channel":"NBC","cup":true},{"day":"2026-11-25","start":"2026-11-25T22:00Z","awayId":"14","homeId":"20","away":"Heat","home":"76ers","a":{"id":"14","name":"Heat","abbr":"MIA","color":"98002e","alt":"000000","rec":"10-6","score":"0"},"h":{"id":"20","name":"76ers","abbr":"PHI","color":"1d428a","alt":"e01234","rec":"14-4","score":"0"},"state":"pre","detail":"11/25 - 5:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909317/heat-76ers","service":"espn","channel":"ESPN","cup":true},{"day":"2026-11-25","start":"2026-11-26T00:00Z","awayId":"4","homeId":"30","away":"Bulls","home":"Hornets","a":{"id":"4","name":"Bulls","abbr":"CHI","color":"ce1141","alt":"000000","rec":"4-12","score":"0"},"h":{"id":"30","name":"Hornets","abbr":"CHA","color":"008ca8","alt":"1d1060","rec":"4-12","score":"0"},"state":"pre","detail":"11/25 - 7:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909318/bulls-hornets","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-25","start":"2026-11-26T00:30Z","awayId":"5","homeId":"18","away":"Cavaliers","home":"Knicks","a":{"id":"5","name":"Cavaliers","abbr":"CLE","color":"860038","alt":"bc945c","rec":"9-8","score":"0"},"h":{"id":"18","name":"Knicks","abbr":"NY","color":"1d428a","alt":"f58426","rec":"11-6","score":"0"},"state":"pre","detail":"11/25 - 7:30 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909319/cavaliers-knicks","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-25","start":"2026-11-26T00:30Z","awayId":"16","homeId":"25","away":"Timberwolves","home":"Thunder","a":{"id":"16","name":"Timberwolves","abbr":"MIN","color":"266092","alt":"79bc43","rec":"12-5","score":"0"},"h":{"id":"25","name":"Thunder","abbr":"OKC","color":"007ac1","alt":"ef3b24","rec":"10-7","score":"0"},"state":"pre","detail":"11/25 - 7:30 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909320/timberwolves-thunder","service":"espn","channel":"ESPN","cup":true},{"day":"2026-11-25","start":"2026-11-26T01:00Z","awayId":"12","homeId":"29","away":"Clippers","home":"Grizzlies","a":{"id":"12","name":"Clippers","abbr":"LAC","color":"12173f","alt":"c8102e","rec":"4-11","score":"0"},"h":{"id":"29","name":"Grizzlies","abbr":"MEM","color":"5d76a9","alt":"12173f","rec":"13-5","score":"0"},"state":"pre","detail":"11/25 - 8:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909321/clippers-grizzlies","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-25","start":"2026-11-26T01:00Z","awayId":"17","homeId":"15","away":"Nets","home":"Bucks","a":{"id":"17","name":"Nets","abbr":"BKN","color":"000000","alt":"ffffff","rec":"3-12","score":"0"},"h":{"id":"15","name":"Bucks","abbr":"MIL","color":"00471b","alt":"eee1c6","rec":"1-16","score":"0"},"state":"pre","detail":"11/25 - 8:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909322/nets-bucks","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-25","start":"2026-11-26T01:30Z","awayId":"21","homeId":"10","away":"Suns","home":"Rockets","a":{"id":"21","name":"Suns","abbr":"PHX","color":"29127a","alt":"e56020","rec":"8-7","score":"0"},"h":{"id":"10","name":"Rockets","abbr":"HOU","color":"ce0e2d","alt":"000000","rec":"12-5","score":"0"},"state":"pre","detail":"11/25 - 8:30 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909323/suns-rockets","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-25","start":"2026-11-26T03:00Z","awayId":"23","homeId":"9","away":"Kings","home":"Warriors","a":{"id":"23","name":"Kings","abbr":"SAC","color":"5a2d81","alt":"6a7a82","rec":"2-14","score":"0"},"h":{"id":"9","name":"Warriors","abbr":"GS","color":"fdb927","alt":"1d428a","rec":"9-8","score":"0"},"state":"pre","detail":"11/25 - 10:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909324/kings-warriors","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-25","start":"2026-11-26T03:00Z","awayId":"24","homeId":"22","away":"Spurs","home":"Trail Blazers","a":{"id":"24","name":"Spurs","abbr":"SA","color":"000000","alt":"c4ced4","rec":"14-3","score":"0"},"h":{"id":"22","name":"Trail Blazers","abbr":"POR","color":"e03a3e","alt":"000000","rec":"11-6","score":"0"},"state":"pre","detail":"11/25 - 10:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909325/spurs-trail-blazers","service":"espn","channel":"ESPN","cup":true},{"day":"2026-11-27","start":"2026-11-28T00:00Z","awayId":"14","homeId":"18","away":"Heat","home":"Knicks","a":{"id":"14","name":"Heat","abbr":"MIA","color":"98002e","alt":"000000","rec":"10-6","score":"0"},"h":{"id":"18","name":"Knicks","abbr":"NY","color":"1d428a","alt":"f58426","rec":"11-6","score":"0"},"state":"pre","detail":"11/27 - 7:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909326/heat-knicks","service":"prime","channel":"Prime Video","cup":true},{"day":"2026-11-27","start":"2026-11-28T00:30Z","awayId":"15","homeId":"8","away":"Bucks","home":"Pistons","a":{"id":"15","name":"Bucks","abbr":"MIL","color":"00471b","alt":"eee1c6","rec":"1-16","score":"0"},"h":{"id":"8","name":"Pistons","abbr":"DET","color":"1d428a","alt":"c8102e","rec":"10-6","score":"0"},"state":"pre","detail":"11/27 - 7:30 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909327/bucks-pistons","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-27","start":"2026-11-28T00:30Z","awayId":"20","homeId":"11","away":"76ers","home":"Pacers","a":{"id":"20","name":"76ers","abbr":"PHI","color":"1d428a","alt":"e01234","rec":"14-4","score":"0"},"h":{"id":"11","name":"Pacers","abbr":"IND","color":"0c2340","alt":"ffd520","rec":"5-12","score":"0"},"state":"pre","detail":"11/27 - 7:30 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909328/76ers-pacers","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-27","start":"2026-11-28T00:30Z","awayId":"17","homeId":"28","away":"Nets","home":"Raptors","a":{"id":"17","name":"Nets","abbr":"BKN","color":"000000","alt":"ffffff","rec":"3-12","score":"0"},"h":{"id":"28","name":"Raptors","abbr":"TOR","color":"d91244","alt":"000000","rec":"6-10","score":"0"},"state":"pre","detail":"11/27 - 7:30 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909329/nets-raptors","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-27","start":"2026-11-28T01:00Z","awayId":"1","homeId":"2","away":"Hawks","home":"Celtics","a":{"id":"1","name":"Hawks","abbr":"ATL","color":"c8102e","alt":"fdb927","rec":"11-6","score":"0"},"h":{"id":"2","name":"Celtics","abbr":"BOS","color":"008348","alt":"ffffff","rec":"11-6","score":"0"},"state":"pre","detail":"11/27 - 8:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909330/hawks-celtics","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-27","start":"2026-11-28T01:30Z","awayId":"29","homeId":"16","away":"Grizzlies","home":"Timberwolves","a":{"id":"29","name":"Grizzlies","abbr":"MEM","color":"5d76a9","alt":"12173f","rec":"13-5","score":"0"},"h":{"id":"16","name":"Timberwolves","abbr":"MIN","color":"266092","alt":"79bc43","rec":"12-5","score":"0"},"state":"pre","detail":"11/27 - 8:30 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909331/grizzlies-timberwolves","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-27","start":"2026-11-28T02:00Z","awayId":"6","homeId":"21","away":"Mavericks","home":"Suns","a":{"id":"6","name":"Mavericks","abbr":"DAL","color":"0064b1","alt":"bbc4ca","rec":"10-7","score":"0"},"h":{"id":"21","name":"Suns","abbr":"PHX","color":"29127a","alt":"e56020","rec":"8-7","score":"0"},"state":"pre","detail":"11/27 - 9:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909332/mavericks-suns","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-27","start":"2026-11-28T02:30Z","awayId":"13","homeId":"24","away":"Lakers","home":"Spurs","a":{"id":"13","name":"Lakers","abbr":"LAL","color":"552583","alt":"fdb927","rec":"14-3","score":"0"},"h":{"id":"24","name":"Spurs","abbr":"SA","color":"000000","alt":"c4ced4","rec":"14-3","score":"0"},"state":"pre","detail":"11/27 - 9:30 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909333/lakers-spurs","service":"prime","channel":"Prime Video","cup":true},{"day":"2026-11-27","start":"2026-11-28T02:30Z","awayId":"7","homeId":"26","away":"Nuggets","home":"Jazz","a":{"id":"7","name":"Nuggets","abbr":"DEN","color":"0e2240","alt":"fec524","rec":"10-5","score":"0"},"h":{"id":"26","name":"Jazz","abbr":"UTAH","color":"4e008e","alt":"79a3dc","rec":"3-15","score":"0"},"state":"pre","detail":"11/27 - 9:30 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909334/nuggets-jazz","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-27","start":"2026-11-28T02:30Z","awayId":"3","homeId":"12","away":"Pelicans","home":"Clippers","a":{"id":"3","name":"Pelicans","abbr":"NO","color":"0a2240","alt":"b4975a","rec":"5-13","score":"0"},"h":{"id":"12","name":"Clippers","abbr":"LAC","color":"12173f","alt":"c8102e","rec":"4-11","score":"0"},"state":"pre","detail":"11/27 - 9:30 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909335/pelicans-clippers","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-27","start":"2026-11-28T02:30Z","awayId":"9","homeId":"22","away":"Warriors","home":"Trail Blazers","a":{"id":"9","name":"Warriors","abbr":"GS","color":"fdb927","alt":"1d428a","rec":"9-8","score":"0"},"h":{"id":"22","name":"Trail Blazers","abbr":"POR","color":"e03a3e","alt":"000000","rec":"11-6","score":"0"},"state":"pre","detail":"11/27 - 9:30 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401909336/warriors-trail-blazers","service":"leaguepass","channel":null,"cup":true},{"day":"2026-11-28","start":"2026-11-28T22:00Z","awayId":"19","homeId":"27","away":"Magic","home":"Wizards","a":{"id":"19","name":"Magic","abbr":"ORL","color":"0150b5","alt":"9ca0a3","rec":"7-9","score":"0"},"h":{"id":"27","name":"Wizards","abbr":"WSH","color":"e31837","alt":"002b5c","rec":"7-11","score":"0"},"state":"pre","detail":"11/28 - 5:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910046/magic-wizards","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-28","start":"2026-11-28T23:00Z","awayId":"17","homeId":"30","away":"Nets","home":"Hornets","a":{"id":"17","name":"Nets","abbr":"BKN","color":"000000","alt":"ffffff","rec":"3-12","score":"0"},"h":{"id":"30","name":"Hornets","abbr":"CHA","color":"008ca8","alt":"1d1060","rec":"4-12","score":"0"},"state":"pre","detail":"11/28 - 6:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910047/nets-hornets","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-28","start":"2026-11-29T01:00Z","awayId":"11","homeId":"4","away":"Pacers","home":"Bulls","a":{"id":"11","name":"Pacers","abbr":"IND","color":"0c2340","alt":"ffd520","rec":"5-12","score":"0"},"h":{"id":"4","name":"Bulls","abbr":"CHI","color":"ce1141","alt":"000000","rec":"4-12","score":"0"},"state":"pre","detail":"11/28 - 8:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910048/pacers-bulls","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-28","start":"2026-11-29T01:00Z","awayId":"25","homeId":"15","away":"Thunder","home":"Bucks","a":{"id":"25","name":"Thunder","abbr":"OKC","color":"007ac1","alt":"ef3b24","rec":"10-7","score":"0"},"h":{"id":"15","name":"Bucks","abbr":"MIL","color":"00471b","alt":"eee1c6","rec":"1-16","score":"0"},"state":"pre","detail":"11/28 - 8:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910049/thunder-bucks","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-28","start":"2026-11-29T01:30Z","awayId":"20","homeId":"10","away":"76ers","home":"Rockets","a":{"id":"20","name":"76ers","abbr":"PHI","color":"1d428a","alt":"e01234","rec":"14-4","score":"0"},"h":{"id":"10","name":"Rockets","abbr":"HOU","color":"ce0e2d","alt":"000000","rec":"12-5","score":"0"},"state":"pre","detail":"11/28 - 8:30 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910050/76ers-rockets","service":"leaguepass","channel":"NBA TV","cup":false},{"day":"2026-11-29","start":"2026-11-29T20:30Z","awayId":"14","homeId":"5","away":"Heat","home":"Cavaliers","a":{"id":"14","name":"Heat","abbr":"MIA","color":"98002e","alt":"000000","rec":"10-6","score":"0"},"h":{"id":"5","name":"Cavaliers","abbr":"CLE","color":"860038","alt":"bc945c","rec":"9-8","score":"0"},"state":"pre","detail":"11/29 - 3:30 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910054/heat-cavaliers","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-29","start":"2026-11-29T21:00Z","awayId":"13","homeId":"29","away":"Lakers","home":"Grizzlies","a":{"id":"13","name":"Lakers","abbr":"LAL","color":"552583","alt":"fdb927","rec":"14-3","score":"0"},"h":{"id":"29","name":"Grizzlies","abbr":"MEM","color":"5d76a9","alt":"12173f","rec":"13-5","score":"0"},"state":"pre","detail":"11/29 - 4:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910051/lakers-grizzlies","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-29","start":"2026-11-29T21:00Z","awayId":"2","homeId":"24","away":"Celtics","home":"Spurs","a":{"id":"2","name":"Celtics","abbr":"BOS","color":"008348","alt":"ffffff","rec":"11-6","score":"0"},"h":{"id":"24","name":"Spurs","abbr":"SA","color":"000000","alt":"c4ced4","rec":"14-3","score":"0"},"state":"pre","detail":"11/29 - 4:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910052/celtics-spurs","service":"leaguepass","channel":"NBA TV","cup":false},{"day":"2026-11-29","start":"2026-11-29T22:00Z","awayId":"21","homeId":"26","away":"Suns","home":"Jazz","a":{"id":"21","name":"Suns","abbr":"PHX","color":"29127a","alt":"e56020","rec":"8-7","score":"0"},"h":{"id":"26","name":"Jazz","abbr":"UTAH","color":"4e008e","alt":"79a3dc","rec":"3-15","score":"0"},"state":"pre","detail":"11/29 - 5:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910053/suns-jazz","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-29","start":"2026-11-29T23:00Z","awayId":"19","homeId":"8","away":"Magic","home":"Pistons","a":{"id":"19","name":"Magic","abbr":"ORL","color":"0150b5","alt":"9ca0a3","rec":"7-9","score":"0"},"h":{"id":"8","name":"Pistons","abbr":"DET","color":"1d428a","alt":"c8102e","rec":"10-6","score":"0"},"state":"pre","detail":"11/29 - 6:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910055/magic-pistons","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-29","start":"2026-11-29T23:00Z","awayId":"1","homeId":"18","away":"Hawks","home":"Knicks","a":{"id":"1","name":"Hawks","abbr":"ATL","color":"c8102e","alt":"fdb927","rec":"11-6","score":"0"},"h":{"id":"18","name":"Knicks","abbr":"NY","color":"1d428a","alt":"f58426","rec":"11-6","score":"0"},"state":"pre","detail":"11/29 - 6:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910056/hawks-knicks","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-29","start":"2026-11-29T23:00Z","awayId":"7","homeId":"28","away":"Nuggets","home":"Raptors","a":{"id":"7","name":"Nuggets","abbr":"DEN","color":"0e2240","alt":"fec524","rec":"10-5","score":"0"},"h":{"id":"28","name":"Raptors","abbr":"TOR","color":"d91244","alt":"000000","rec":"6-10","score":"0"},"state":"pre","detail":"11/29 - 6:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910057/nuggets-raptors","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-29","start":"2026-11-29T23:00Z","awayId":"3","homeId":"22","away":"Pelicans","home":"Trail Blazers","a":{"id":"3","name":"Pelicans","abbr":"NO","color":"0a2240","alt":"b4975a","rec":"5-13","score":"0"},"h":{"id":"22","name":"Trail Blazers","abbr":"POR","color":"e03a3e","alt":"000000","rec":"11-6","score":"0"},"state":"pre","detail":"11/29 - 6:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910058/pelicans-trail-blazers","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-29","start":"2026-11-30T01:30Z","awayId":"12","homeId":"9","away":"Clippers","home":"Warriors","a":{"id":"12","name":"Clippers","abbr":"LAC","color":"12173f","alt":"c8102e","rec":"4-11","score":"0"},"h":{"id":"9","name":"Warriors","abbr":"GS","color":"fdb927","alt":"1d428a","rec":"9-8","score":"0"},"state":"pre","detail":"11/29 - 8:30 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910059/clippers-warriors","service":"leaguepass","channel":null,"cup":false},{"day":"2026-11-29","start":"2026-11-30T02:00Z","awayId":"16","homeId":"23","away":"Timberwolves","home":"Kings","a":{"id":"16","name":"Timberwolves","abbr":"MIN","color":"266092","alt":"79bc43","rec":"12-5","score":"0"},"h":{"id":"23","name":"Kings","abbr":"SAC","color":"5a2d81","alt":"6a7a82","rec":"2-14","score":"0"},"state":"pre","detail":"11/29 - 9:00 PM EST","link":"https://www.espn.com/nba/game/_/gameId/401910060/timberwolves-kings","service":"leaguepass","channel":null,"cup":false}],"teams":{"1":{"roster":18,"out":["C. McCollum","J. Landale","A. Newell","M. Gueye","H. Veesaar"]},"10":{"roster":17,"out":[]},"11":{"roster":17,"out":["T. Haliburton","T.J. McConnell","A. Nesmith","B. Sheppard","J. Furphy"]},"12":{"roster":19,"out":["B. Beal","J. Miller"]},"13":{"roster":19,"out":["A. Reaves"]},"14":{"roster":17,"out":[]},"15":{"roster":18,"out":[]},"16":{"roster":17,"out":["A. Edwards","D. DiVincenzo","J. Clark"]},"17":{"roster":18,"out":["N. Traore"]},"18":{"roster":17,"out":["J. Clarkson"]},"19":{"roster":17,"out":["P. Banchero","J. Isaac","N. Penda","I. Nelson"]},"2":{"roster":17,"out":["M. Robinson"]},"20":{"roster":17,"out":["J. Embiid","A. Hukporti"]},"21":{"roster":17,"out":["M. Williams"]},"22":{"roster":17,"out":["J. Morant","S. Sharpe","V. Krejci","C. Youngblood"]},"23":{"roster":18,"out":["B. Simmons","M. Raynaud"]},"24":{"roster":17,"out":["D. Fox","T. Harris","V. Wembanyama","D. Harper","J. Quaintance"]},"25":{"roster":18,"out":["C. Holmgren","J. Williams","A. Caruso","J. Williams","C. Wallace","N. Topic","T. Sorber","A. Mara"]},"26":{"roster":18,"out":["J. Jackson Jr.","L. Markkanen","J. Nurkic","J. Hayes"]},"27":{"roster":18,"out":["T. Vukcevic","J. Champagnie","J. Watkins","R. Beekman"]},"28":{"roster":17,"out":["K. Leonard","R. Barrett","N. Bittle"]},"29":{"roster":18,"out":["J. Grant","S. Pippen Jr.","G. Jackson","C. Boozer","R. Saunders"]},"3":{"roster":18,"out":["D. Murray","B. Mathurin","T. Watford"]},"30":{"roster":18,"out":["G. Allen","D. Schroder","G. Williams","K. Knueppel"]},"4":{"roster":18,"out":["N. Powell","C. Wilson"]},"5":{"roster":18,"out":["E. Mobley","N. Tomlin"]},"6":{"roster":18,"out":["D. Lively II","T. Biberovic","S. de Larrea","T. Lawal"]},"7":{"roster":17,"out":[]},"8":{"roster":18,"out":["D. Robinson","T. Prince","J. Duren","E. Okorie"]},"9":{"roster":18,"out":["S. Curry","J. Butler III","K. Porzingis","M. Moody","B. Williams"]}}};
 
 const SERVICES = [
-  { id: "prime", name: "Prime Video", sub: "Thursdays, Friday doubleheaders", color: "--prime", url: "https://www.amazon.com/primevideo" },
-  { id: "peacock", name: "Peacock", sub: "Mondays and NBC Tuesdays", color: "--peacock", url: "https://www.peacocktv.com" },
-  { id: "espn", name: "ESPN", sub: "ESPN and ABC games", color: "--espn" },
-  { id: "leaguepass", name: "League Pass", sub: "Every other game", color: "--lp",
-    note: "Games involving your local team are blacked out on League Pass." },
+  { id: "prime", name: "Prime Video", color: "--prime" },
+  { id: "peacock", name: "Peacock", color: "--peacock" },
+  { id: "espn", name: "ESPN", color: "--espn" },
+  { id: "leaguepass", name: "League Pass", color: "--lp",
+    note: "Games with your local team are blacked out on League Pass." },
 ];
 
 const tz = "America/New_York";
 const dayKey = d => new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 const timeET = iso => new Date(iso).toLocaleTimeString("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" });
 const dayLabel = (key, opts) => new Date(key + "T12:00:00Z").toLocaleDateString("en-US", { timeZone: "UTC", ...opts });
+const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const hex = h => /^[0-9a-f]{6}$/i.test(h || "") ? "#" + h : "#333333";
+const CHEV = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 8l5 5 5-5"/></svg>`;
 
 const now = new Date();
 const today = dayKey(now);
 const games = (DATA && DATA.games) || [];
+const TEAMS = (DATA && DATA.teams) || {};
 const tonight = games.filter(g => g.day === today);
 
-document.getElementById("date").textContent =
-  dayLabel(today, { weekday: "long", month: "long", day: "numeric" }) + " · " +
-  (tonight.length ? `${tonight.length} game${tonight.length === 1 ? "" : "s"} tonight` : "No games tonight");
+document.getElementById("date").innerHTML =
+  esc(dayLabel(today, { weekday: "long", month: "long", day: "numeric" })) + " · " +
+  (tonight.length ? `<b>${tonight.length} game${tonight.length === 1 ? "" : "s"}</b> tonight` : "No games tonight");
 
+// Live / final / upcoming, judged from the scheduled tip-off on this device.
 function state(g) {
+  if (g.state === "post") return "done";
   const start = new Date(g.start).getTime(), t = now.getTime();
   if (t >= start + 3 * 3600e3) return "done";
   if (t >= start) return "live";
-  return "";
+  return "pre";
 }
 
-const TEAMS = (DATA && DATA.teams) || {};
-const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-const CHEV = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 8l5 5 5-5"/></svg>`;
-let rowId = 0;
+// Pick a readable block color for a team: its main color unless too light, then its alternate.
+function lum(h) { const n = parseInt(h.slice(1), 16); const c = [n >> 16, (n >> 8) & 255, n & 255].map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; }
+function teamColors(t) {
+  let bg = hex(t.color);
+  if (lum(bg) < .012) bg = hex(t.alt) !== "#333333" && lum(hex(t.alt)) > .012 ? hex(t.alt) : "#2b3340"; // near-black blends into the bug
+  return { bg, fg: lum(bg) > .45 ? "#10151d" : "#ffffff" };
+}
 
-function teamLine(name, t) {
-  if (!t) return `<div><b>${esc(name)}</b> <span class="cnt">roster not available</span></div>`;
+function teamRow(t, other, showScore) {
+  const c = teamColors(t);
+  const s = Number(t.score), o = Number(other.score);
+  const cls = showScore ? (s >= o ? "lead" : "trail") : "";
+  return `<div class="row">
+    <div class="abbr" style="--tc:${c.bg};--tf:${c.fg}">${esc(t.abbr)}</div>
+    <div class="tname"><b>${esc(t.name)}</b>${t.rec ? `<small>${esc(t.rec)}</small>` : ""}</div>
+    ${showScore ? `<div class="score ${cls}">${esc(t.score)}</div>` : `<div></div>`}
+  </div>`;
+}
+
+function injuries(name, t) {
+  if (!t) return `<div><b>${esc(name)}</b> <span class="cnt">injury report not available</span></div>`;
   const active = t.roster - t.out.length;
   return `<div><b>${esc(name)}</b> <span class="cnt">${active} of ${t.roster} active</span>
-    <div class="outs">${t.out.length ? t.out.map(n => esc(n) + " out").join(", ") : "Nobody out"}</div></div>`;
+    <div class="who">${t.out.length ? t.out.map(n => esc(n) + " out").join(", ") : "Nobody out"}</div></div>`;
 }
 
-function gameRow(g) {
-  const s = state(g);
-  const id = "g" + (rowId++);
-  const a = TEAMS[g.awayId], h = TEAMS[g.homeId];
-  const tags = [];
-  if (s === "live") tags.push(`<span class="tag live">Live now</span>`);
-  if (g.channel && !["Prime Video", "Peacock"].includes(g.channel)) tags.push(`<span class="tag">${esc(g.channel)}</span>`);
-  if (g.cup) tags.push(`<span class="tag">NBA Cup</span>`);
-  const outCount = (a ? a.out.length : 0) + (h ? h.out.length : 0);
-  const summary = (a && h) ? `${outCount} player${outCount === 1 ? "" : "s"} out` : "Injury report";
+let n = 0;
+function gameBug(g) {
+  const s = state(g), id = "g" + (n++);
+  const a = g.a, h = g.h;
+  const hasScore = g.state !== "pre" && a.score != null && h.score != null;
+  const ta = TEAMS[g.awayId], th = TEAMS[g.homeId];
+  const outs = (ta ? ta.out.length : 0) + (th ? th.out.length : 0);
+  const pills = [];
+  if (g.cup) pills.push(`<span class="pill">NBA Cup</span>`);
+  if (g.channel && !["Prime Video", "Peacock"].includes(g.channel)) pills.push(`<span class="pill">${esc(g.channel)}</span>`);
+  const statusTop = s === "live" ? `<span class="pill live">Live</span>`
+    : s === "done" ? `<span class="t">Final</span>`
+    : `<span class="t">${timeET(g.start)}</span><span class="z">ET</span>`;
+  const link = g.link && g.link.startsWith("https://") ? g.link : null;
+  let liveLine = "";
+  if (s === "live") {
+    liveLine = `<div class="live-line"><span class="pill live">Live now</span>
+      ${hasScore ? `<span class="sc">${esc(a.abbr)} ${esc(a.score)} – ${esc(h.score)} ${esc(h.abbr)}</span>` : ""}
+      ${link ? `<a href="${esc(link)}" target="_blank" rel="noopener">Live score on ESPN ↗</a>` : ""}</div>`;
+  } else if (s === "done" && link) {
+    liveLine = `<div class="live-line"><span class="pill">Final</span><a href="${esc(link)}" target="_blank" rel="noopener">Box score on ESPN ↗</a></div>`;
+  }
   return `<div class="game ${s === "done" ? "done" : ""}">
-    <button type="button" aria-expanded="false" aria-controls="${id}">
-      <div class="time">${timeET(g.start)}</div>
-      <div class="teams">${esc(g.away)}<span class="at">@</span>${esc(g.home)}
-        ${tags.length ? `<div class="tags">${tags.join("")}</div>` : ""}
-        <div class="avail">${summary} ${CHEV}</div></div>
+    <button type="button" class="bug" aria-expanded="false" aria-controls="${id}"
+      aria-label="${esc(a.name)} at ${esc(h.name)}, ${s === "live" ? "live now" : timeET(g.start)}. Show injuries.">
+      <div class="rows">${teamRow(a, h, hasScore)}${teamRow(h, a, hasScore)}</div>
+      <div class="status">${statusTop}${pills.join("")}</div>
+      <div class="foot"><span>${a.abbr && h.abbr ? esc(a.abbr) + " @ " + esc(h.abbr) : ""}</span>
+        <span class="outs">${ta && th ? `${outs} player${outs === 1 ? "" : "s"} out` : "Injury report"} ${CHEV}</span></div>
     </button>
-    <div class="roster" id="${id}" hidden>
-      ${teamLine(g.away, a)}
-      ${teamLine(g.home, h)}
+    <div class="inj" id="${id}" hidden>
+      ${liveLine}
+      ${injuries(a.name, ta)}
+      ${injuries(h.name, th)}
     </div>
   </div>`;
 }
 
-function emptyText(svc) {
-  const next = games.find(g => g.service === svc.id && g.day > today);
-  if (!next) return `No ${svc.name} games tonight or in the next week.`;
-  return `No ${svc.name} games tonight.<br>Next: <strong>${dayLabel(next.day, { weekday: "short", month: "short", day: "numeric" })}, ${next.away} @ ${next.home}, ${timeET(next.start)}</strong>`;
+const sheet = document.getElementById("sheet");
+const wrap = document.getElementById("services");
+const shown = SERVICES
+  .map(svc => ({ svc, list: tonight.filter(g => g.service === svc.id) }))
+  .filter(x => x.list.length)
+  .sort((x, y) => y.list.length - x.list.length);
+
+function closeAll() {
+  wrap.querySelectorAll(".svc.open").forEach(el => {
+    el.classList.remove("open");
+    el.querySelector(".games").hidden = true;
+    el.querySelector(".head").setAttribute("aria-expanded", "false");
+  });
+  sheet.classList.remove("focus");
+  document.body.classList.remove("focus");
 }
 
-const wrap = document.getElementById("services");
-for (const svc of SERVICES) {
-  const list = tonight.filter(g => g.service === svc.id);
+for (const { svc, list } of shown) {
   const el = document.createElement("div");
   el.className = "svc";
   el.style.setProperty("--c", `var(${svc.color})`);
   el.innerHTML = `
-    <button type="button" id="btn-${svc.id}" aria-expanded="false" aria-controls="list-${svc.id}">
+    <button type="button" class="head" id="btn-${svc.id}" aria-expanded="false" aria-controls="list-${svc.id}">
       <span class="bar"></span>
-      <span class="name">${svc.name}<span class="sub">${svc.sub}</span></span>
-      <span class="count ${list.length ? "" : "zero"}" aria-label="${list.length} games tonight">${list.length}</span>
-      <svg class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 8l5 5 5-5"/></svg>
+      <span class="name">${svc.name}</span>
+      <span class="count">${list.length} game${list.length === 1 ? "" : "s"}</span>
+      ${CHEV.replace("<svg", '<svg class="chev"')}
     </button>
     <div class="games" id="list-${svc.id}" hidden>
-      ${list.length ? list.map(gameRow).join("") : `<div class="empty">${emptyText(svc)}</div>`}
-      ${svc.note && list.length ? `<div class="note">${svc.note}</div>` : ""}
+      ${list.map(gameBug).join("")}
+      ${svc.note ? `<div class="note">${svc.note}</div>` : ""}
     </div>`;
-  const btn = el.querySelector("button"), panel = el.querySelector(".games");
-  btn.addEventListener("click", () => {
-    const open = panel.hidden;
-    panel.hidden = !open;
-    el.classList.toggle("open", open);
-    btn.setAttribute("aria-expanded", String(open));
+  const head = el.querySelector(".head"), panel = el.querySelector(".games");
+  head.addEventListener("click", e => {
+    e.stopPropagation();
+    const wasOpen = el.classList.contains("open");
+    closeAll();
+    if (wasOpen) return;
+    el.classList.add("open");
+    panel.hidden = false;
+    head.setAttribute("aria-expanded", "true");
+    sheet.classList.add("focus");
+    document.body.classList.add("focus");
   });
-  el.querySelectorAll(".game > button").forEach(b => b.addEventListener("click", () => {
-    const panel = document.getElementById(b.getAttribute("aria-controls"));
-    const open = panel.hidden;
-    panel.hidden = !open;
+  el.querySelectorAll(".bug").forEach(b => b.addEventListener("click", e => {
+    e.stopPropagation();
+    const inj = document.getElementById(b.getAttribute("aria-controls"));
+    const open = inj.hidden;
+    inj.hidden = !open;
     b.parentElement.classList.toggle("open", open);
     b.setAttribute("aria-expanded", String(open));
   }));
+  el.addEventListener("click", e => e.stopPropagation());
   wrap.appendChild(el);
+}
+
+// Tapping anywhere outside the open service closes it.
+document.addEventListener("click", () => { if (sheet.classList.contains("focus")) closeAll(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeAll(); });
+
+if (!shown.length) {
+  const next = games.find(g => g.day > today);
+  wrap.innerHTML = `<div class="empty"><div class="big">No games tonight</div>
+    <p>${next ? `Next up: <strong>${esc(dayLabel(next.day, { weekday: "short", month: "short", day: "numeric" }))}, ${esc(next.away)} @ ${esc(next.home)}, ${timeET(next.start)}</strong>` : "Check back tomorrow."}</p></div>`;
 }
 
 const updated = DATA && DATA.updated ? new Date(DATA.updated) : null;
@@ -211,5 +380,5 @@ const lastDay = games.length ? games[games.length - 1].day : null;
 document.getElementById("foot").textContent =
   (lastDay && today > lastDay ? "This schedule is out of date. " : "") +
   "Times are Eastern. " +
-  (updated ? `Schedule updated ${updated.toLocaleDateString("en-US", { timeZone: tz, month: "short", day: "numeric" })}.` : "");
+  (updated ? `Updated ${updated.toLocaleString("en-US", { timeZone: tz, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.` : "");
 </script>
