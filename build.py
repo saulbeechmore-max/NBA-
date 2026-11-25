@@ -21,6 +21,7 @@ from zoneinfo import ZoneInfo
 ET = ZoneInfo("America/New_York")
 FEED = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates={}"
 ROSTER = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/{}/roster"
+SPLITS = "https://site.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/{}/splits"
 DAYS = 7
 INJURY_REFRESH = (18, 30)  # 6:30 PM Eastern
 HERE = Path(__file__).parent
@@ -56,6 +57,20 @@ def salary(athlete, season_year):
     return max((c.get("salary") or 0 for c in contracts), default=0)
 
 
+def points_per_game(athlete_id):
+    """Season points per game from the player's splits ("All Splits" row); None if unknown."""
+    try:
+        d = get_json(SPLITS.format(athlete_id))
+        i = d["names"].index("avgPoints")
+        for cat in d.get("splitCategories", []):
+            for sp in cat.get("splits", []):
+                if sp.get("displayName") == "All Splits":
+                    return float(sp["stats"][i])
+    except (OSError, ValueError, KeyError, IndexError):
+        pass
+    return None
+
+
 def team_status(team_id):
     """Roster size and the players listed as Out, highest paid first."""
     data = get_json(ROSTER.format(team_id))
@@ -70,6 +85,7 @@ def team_status(team_id):
         "roster": len(athletes),
         "out": [a.get("shortName") or a.get("displayName") for a in out],
         "outPay": sum(salary(a, season_year) for a in out),  # combined yearly salary of players out
+        "outPpg": [points_per_game(a.get("id")) for a in out],  # season points per game, same order
     }
 
 
@@ -160,7 +176,7 @@ def main():
     prev_teams = prev.get("teams") or {}
     prev_at = prev.get("injuriesAt")
     prev_at = datetime.fromisoformat(prev_at) if prev_at else None
-    stale = (not prev_teams or prev_at is None or "outPay" not in next(iter(prev_teams.values()), {})
+    stale = (not prev_teams or prev_at is None or "outPpg" not in next(iter(prev_teams.values()), {})
              or (now >= cutoff and prev_at < cutoff))
     if stale:
         teams = {tid: team_status(tid) for tid in team_ids}

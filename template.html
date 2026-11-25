@@ -6,7 +6,7 @@
 <style>
 /* Layout: a coach's clipboard lying on a basketball. The clipboard fills the screen and never grows;
    its contents scroll inside it. Each service shows its game count on a little CRT set and opens into
-   TV-style score bugs; game info is a sticky note stuck under the bug. One deliberate look. */
+   game tickets; game info is a sticky note stuck under the ticket. One deliberate look. */
 :root {
   color-scheme: light;
   --ball: #5e2610;
@@ -26,11 +26,16 @@
   --note: #fde878;
   --note-edge: #f2d55a;
   --note-ink: #2b2410;
-  /* players-out severity, by combined yearly salary of players out */
-  --out-none: #34c26a;
-  --out-low: #f2c230;
-  --out-mid: #e0700f;
-  --out-high: #ef4040;
+  /* players-out severity, by the best scorer out (season points per game) */
+  --out-none: #1f9d55;
+  --out-mid: #d9650b;
+  --out-high: #d62828;
+  --loser: #d62828;
+  --tk-paper: #fbf6e8;
+  --tk-paper2: #f2ead3;
+  --tk-ink: #1d1a14;
+  --tk-muted: #6e6552;
+  --panel: #f6f7f9;
   /* service brand colors */
   --prime: #00a8e1;
   --espn: #dd0000;
@@ -62,7 +67,9 @@ body {
 .seams { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
 
 .sheet {
-  position: relative; z-index: 1; max-width: 540px; height: 100%; margin: 0 auto; box-sizing: border-box;
+  position: relative; z-index: 1; margin: 0 auto; box-sizing: border-box;
+  /* US letter proportions (8.5 x 11), as large as the screen allows */
+  width: min(100%, 600px, calc((100vh - 42px) * 8.5 / 11)); width: min(100%, 600px, calc((100dvh - 42px) * 8.5 / 11)); aspect-ratio: 8.5 / 11;
   background: var(--sheet); border-radius: 10px;
   box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 14px 34px rgba(0,0,0,.5), 0 2px 4px rgba(0,0,0,.35);
   display: flex; flex-direction: column; isolation: isolate;
@@ -109,7 +116,7 @@ header h1 { font-family: var(--hand); font-weight: 400; font-size: 2.5rem; line-
 .tv .num { font-family: var(--display); font-weight: 800; font-size: 22px; fill: #c9ffe0; filter: drop-shadow(0 0 3px rgba(120,255,180,.85)); }
 
 .games[hidden] { display: none; }
-.games { border-top: 1px solid var(--line); padding: 14px 12px 12px; display: grid; gap: 14px; background: #f6f7f9; }
+.games { border-top: 1px solid var(--line); padding: 14px 12px 12px; display: grid; gap: 14px; background: var(--panel); }
 .note-lp { color: var(--muted); font-size: .78rem; line-height: 1.45; text-align: center; transition: filter .25s, opacity .25s; }
 
 /* focus: an open service blurs the rest of the clipboard; an open sticky note also blurs the other games */
@@ -117,33 +124,44 @@ header h1 { font-family: var(--hand); font-weight: 400; font-size: 2.5rem; line-
 .games.notefocus .game:not(.open), .games.notefocus .note-lp { filter: blur(3px); opacity: .4; }
 .game { display: grid; transition: filter .25s, opacity .25s; }
 
-/* score bug */
-.bug { all: unset; box-sizing: border-box; cursor: pointer; width: 100%; position: relative; z-index: 2;
-  display: grid; grid-template-columns: 1fr auto; border-radius: 10px; overflow: hidden;
-  background: var(--bug); color: var(--bug-fg); box-shadow: 0 4px 10px rgba(16,21,29,.25); }
-.bug:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
-.rows { display: grid; }
-.row { display: grid; grid-template-columns: 54px 1fr auto; align-items: center; min-height: 50px; }
-.row + .row { border-top: 1px solid rgba(255,255,255,.07); }
-.abbr { align-self: stretch; display: grid; place-items: center; font-family: var(--display); font-weight: 800;
-  font-size: 1.05rem; letter-spacing: .04em; background: var(--tc); color: var(--tf); }
-.tname { padding: 6px 10px; min-width: 0; font-family: var(--display); font-weight: 700; font-size: 1.25rem; line-height: 1.05; text-transform: uppercase; letter-spacing: .02em; }
-.rec { font-family: var(--display); font-weight: 600; font-size: 1.15rem; padding: 0 12px; color: var(--bug-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.status { display: grid; align-content: center; justify-items: center; gap: 3px; min-width: 84px; padding: 8px 10px;
-  background: var(--bug-2); border-left: 1px solid rgba(255,255,255,.07); text-align: center; color: var(--oc, var(--bug-muted)); }
-.status .big { font-family: var(--display); font-weight: 800; font-size: 1.9rem; line-height: .9; }
-.status .small { font-family: var(--display); font-weight: 700; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; line-height: 1.05; }
-.pill { font-size: .6rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; border-radius: 4px; padding: 2px 5px; background: rgba(255,255,255,.1); color: var(--bug-muted); white-space: nowrap; }
+/* game ticket: main part with both teams, perforated stub with the players-out count */
+.bug.ticket { all: unset; box-sizing: border-box; cursor: pointer; width: 100%; position: relative; z-index: 2;
+  display: grid; grid-template-columns: 1fr 82px; color: var(--tk-ink);
+  filter: drop-shadow(0 3px 5px rgba(16,21,29,.22)); }
+.bug.ticket:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 10px; }
+.tk-main { min-width: 0; background-color: var(--tk-paper); border-radius: 10px 0 0 10px; overflow: hidden; padding-bottom: 8px;
+  background-image: repeating-linear-gradient(135deg, rgba(120,90,30,.05) 0 2px, transparent 2px 7px); }
+.tk-band { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 5px 10px;
+  color: #fff; font: 700 .6rem/1 var(--body); letter-spacing: .14em; text-transform: uppercase;
+  background: linear-gradient(90deg, var(--ca) 0 50%, var(--ch) 50% 100%); }
+.tk-band span { text-shadow: 0 1px 2px rgba(0,0,0,.45); }
+.tk-teams { display: grid; gap: 3px; padding: 8px 10px 2px; }
+.tk-team { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 8px; }
+.tk-team .abbr { border-radius: 4px; padding: 4px 0; text-align: center; font-family: var(--display); font-weight: 800;
+  font-size: .82rem; letter-spacing: .04em; background: var(--tc); color: var(--tf); }
+.tk-team .nm { min-width: 0; font-family: var(--display); font-weight: 800; font-size: 1.28rem; line-height: 1.05; text-transform: uppercase; letter-spacing: .02em; }
+.tk-team .nm.lost { color: var(--loser); }
+.tk-team .rec { text-align: right; font-family: var(--display); font-weight: 700; font-size: 1.02rem; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tk-team .rec small { display: block; font-family: var(--body); font-weight: 600; font-size: .56rem; letter-spacing: .08em; text-transform: uppercase; color: var(--tk-muted); margin-top: 2px; }
+.tk-at { font-family: var(--display); font-weight: 600; font-size: .78rem; color: var(--tk-muted); padding-left: 48px; line-height: 1; }
+.tk-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 10px 0; padding-top: 6px;
+  border-top: 1px dashed rgba(60,45,10,.25); font-size: .72rem; font-weight: 600; color: var(--tk-muted); }
+.tk-stub { position: relative; background: var(--tk-paper2); border-radius: 0 10px 10px 0; border-left: 2px dashed rgba(60,45,10,.35);
+  display: grid; align-content: center; justify-items: center; gap: 2px; padding: 8px 4px; text-align: center; }
+.tk-stub::before, .tk-stub::after { content: ""; position: absolute; left: -9px; width: 16px; height: 16px; border-radius: 50%; background: var(--panel); }
+.tk-stub::before { top: -8px; } .tk-stub::after { bottom: -8px; }
+.tk-stub .admit { font: 700 .48rem/1 var(--body); letter-spacing: .18em; color: var(--tk-muted); text-transform: uppercase; }
+.tk-stub .big { font-family: var(--display); font-weight: 800; font-size: 2.1rem; line-height: .9; color: var(--oc, var(--tk-muted)); }
+.tk-stub .small { font-family: var(--display); font-weight: 700; font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; line-height: 1.05; color: var(--oc, var(--tk-muted)); }
+.tk-stub .barcode { width: 54px; height: 13px; margin-top: 3px; opacity: .65;
+  background: repeating-linear-gradient(90deg, var(--tk-ink) 0 1px, transparent 1px 3px, var(--tk-ink) 3px 5px, transparent 5px 6px, var(--tk-ink) 6px 7px, transparent 7px 10px); }
+.tk-stub .info { display: inline-flex; align-items: center; gap: 2px; margin-top: 3px; font-size: .62rem; font-weight: 700; color: var(--tk-ink); }
+.tk-stub .info svg { width: 11px; height: 11px; transition: transform .2s; }
+.game.open .tk-stub .info svg { transform: rotate(180deg); }
+.pill { font-size: .6rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; border-radius: 4px; padding: 2px 5px; background: rgba(60,45,10,.09); color: var(--tk-muted); white-space: nowrap; }
 .pill.live { background: var(--live); color: #fff; display: inline-flex; align-items: center; gap: 4px; }
 .pill.live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: blink 1.2s infinite; }
 @keyframes blink { 50% { opacity: .25; } }
-.foot { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 28px;
-  padding: 5px 10px; font-size: .72rem; color: var(--bug-muted); background: rgba(255,255,255,.04); border-top: 1px solid rgba(255,255,255,.07); }
-.foot .left { display: inline-flex; gap: 6px; align-items: center; }
-.foot .info { display: inline-flex; align-items: center; gap: 4px; color: var(--bug-fg); font-weight: 600; margin-left: auto; }
-.foot svg { width: 13px; height: 13px; transition: transform .2s; }
-.game.open .foot svg { transform: rotate(180deg); }
-.game.done .bug { opacity: .65; }
 
 /* sticky note */
 .inj[hidden] { display: none; }
@@ -165,12 +183,12 @@ header h1 { font-family: var(--hand); font-weight: 400; font-size: 2.5rem; line-
 .empty strong { color: var(--ink); }
 .updated { color: var(--muted); font-size: .74rem; line-height: 1.5; text-align: center; margin-top: 16px; transition: filter .25s, opacity .25s; }
 @media (prefers-reduced-motion: reduce) {
-  .chev, .foot svg, .svc, .game, header, .top, .updated, .note-lp { transition: none; }
+  .chev, .tk-stub .info svg, .svc, .game, header, .top, .updated, .note-lp { transition: none; }
   .pill.live::before { animation: none; }
 }
 @media (max-width: 380px) {
-  .row { grid-template-columns: 46px 1fr auto; }
-  .status { min-width: 72px; }
+  .bug.ticket { grid-template-columns: 1fr 72px; }
+  .tk-team .nm { font-size: 1.12rem; }
   header h1 { font-size: 2.1rem; }
   .name { font-size: 1.35rem; }
 }
@@ -285,13 +303,27 @@ function salary(ath, year) {
   return cur ? (cur.salary || 0) : cs.reduce((m, c) => Math.max(m, c.salary || 0), 0);
 }
 
+const ppgCache = {};
+async function pointsPerGame(athleteId) {
+  if (athleteId in ppgCache) return ppgCache[athleteId];
+  let v = null;
+  try {
+    const d = await getJSON(`https://site.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/${athleteId}/splits`);
+    const i = d.names.indexOf("avgPoints");
+    for (const cat of d.splitCategories || []) for (const sp of cat.splits || [])
+      if (sp.displayName === "All Splits" && i >= 0) v = parseFloat(sp.stats[i]);
+  } catch (e) {}
+  return (ppgCache[athleteId] = Number.isFinite(v) ? v : null);
+}
+
 async function teamStatus(id) {
   const d = await getJSON(`${API}/teams/${id}/roster`);
   const year = (d.season || {}).year;
   const ath = d.athletes || [];
   const out = ath.filter(a => (a.injuries || []).some(i => (i.status || "").toLowerCase() === "out"))
     .sort((x, y) => salary(y, year) - salary(x, year));
-  return { roster: ath.length, out: out.map(a => a.shortName || a.displayName), outPay: out.reduce((s, a) => s + salary(a, year), 0) };
+  const outPpg = await Promise.all(out.map(a => pointsPerGame(a.id)));
+  return { roster: ath.length, out: out.map(a => a.shortName || a.displayName), outPay: out.reduce((s, a) => s + salary(a, year), 0), outPpg };
 }
 
 const ymd = d => dayKey(d).replaceAll("-", "");
@@ -329,12 +361,13 @@ function state(g, now) {
   return "pre";
 }
 
-// Color for the players-out count, by the combined yearly salary of everyone out in the game.
-function outColor(count, pay) {
-  if (count === 0) return "var(--out-none)";
-  if (pay < 20e6) return "var(--out-low)";
-  if (pay <= 50e6) return "var(--out-mid)";
-  return "var(--out-high)";
+// Color for the players-out count, by the best scorer who is out in the game (season points per game).
+function outColor(teams) {
+  const ppg = teams.flatMap(t => t.outPpg || []).filter(v => typeof v === "number");
+  const top = ppg.length ? Math.max(...ppg) : 0;
+  if (top > 20) return "var(--out-high)";
+  if (top >= 14) return "var(--out-mid)";
+  return "var(--out-none)";
 }
 
 function lum(h) { const n = parseInt(h.slice(1), 16); const c = [n >> 16, (n >> 8) & 255, n & 255].map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; }
@@ -344,20 +377,31 @@ function teamColors(t) {
   return { bg, fg: lum(bg) > .45 ? "#10151d" : "#ffffff" };
 }
 
-function teamRow(t) {
+// Which game of the season this is for a team: games already played, plus this one unless the record already counts it.
+function gameNumber(t, g) {
+  const m = /^(\d+)-(\d+)/.exec(t.rec || "");
+  if (!m) return null;
+  return +m[1] + +m[2] + (g.state === "post" ? 0 : 1);
+}
+
+function teamLine(t, g, lost) {
   const c = teamColors(t);
-  return `<div class="row">
+  const n = gameNumber(t, g);
+  return `<div class="tk-team">
     <div class="abbr" style="--tc:${c.bg};--tf:${c.fg}">${esc(t.abbr)}</div>
-    <div class="tname">${esc(t.name)}</div>
-    <div class="rec">${esc(t.rec || "")}</div>
+    <div class="nm${lost ? " lost" : ""}">${esc(t.name)}</div>
+    <div class="rec">${esc(t.rec || "")}${n ? `<small>Game ${n}</small>` : ""}</div>
   </div>`;
 }
 
 function injuries(name, t) {
   if (!t) return `<div><b>${esc(name)}</b> <span class="cnt">no injury report</span></div>`;
   const active = t.roster - t.out.length;
-  return `<div><b>${esc(name)}</b> <span class="cnt">${active} of ${t.roster} active</span>
-    <div>${t.out.length ? t.out.map(n => esc(n) + " out").join(", ") : "Nobody out"}</div></div>`;
+  const head = `<b>${esc(name)}</b> <span class="cnt">${active}/${t.roster} players active</span>`;
+  if (!t.out.length) return `<div>${head}</div>`;
+  const ppg = t.outPpg || [];
+  return `<div>${head}
+    <div>${t.out.map((n, i) => esc(n) + " out" + (typeof ppg[i] === "number" ? ` <span class="cnt">(${ppg[i].toFixed(1)} ppg)</span>` : "")).join(", ")}</div></div>`;
 }
 
 function tvIcon(n) {
@@ -384,22 +428,37 @@ function gameBug(g, TEAMS, now, i) {
   const ta = TEAMS[g.awayId], th = TEAMS[g.homeId];
   const known = ta && th;
   const outs = known ? ta.out.length + th.out.length : null;
-  const pay = known ? (ta.outPay || 0) + (th.outPay || 0) : 0;
+  // Final: the team with fewer points lost (scores come from the last data load).
+  const final = s === "done" && g.state === "post" && a.score != null && h.score != null;
+  const awayLost = final && Number(a.score) < Number(h.score);
+  const homeLost = final && Number(h.score) < Number(a.score);
+  const ca = teamColors(a).bg, ch = teamColors(h).bg;
   const pills = [];
-  if (g.cup) pills.push(`<span class="pill">NBA Cup</span>`);
+  if (s === "live") pills.push(`<span class="pill live">Live now</span>`);
+  else if (s === "done") pills.push(`<span class="pill">Final</span>`);
+  else pills.push(`<span>${timeET(g.start)} ET</span>`);
   if (g.channel && !["Prime Video", "Peacock"].includes(g.channel)) pills.push(`<span class="pill">${esc(g.channel)}</span>`);
-  const left = s === "live" ? `<span class="pill live">Live now</span>`
-    : s === "done" ? `<span class="pill">Final</span>`
-    : `<span>${timeET(g.start)} ET</span>`;
-  const statusBox = known
-    ? `<div class="status" style="--oc:${outColor(outs, pay)}"><span class="big">${outs}</span><span class="small">Player${outs === 1 ? "" : "s"}<br>out</span></div>`
-    : `<div class="status"><span class="big">–</span><span class="small">No<br>report</span></div>`;
-  return `<div class="game ${s === "done" ? "done" : ""}" data-gid="${esc(id)}">
-    <button type="button" class="bug" aria-expanded="false" aria-controls="${esc(id)}"
-      aria-label="${esc(a.name)} at ${esc(h.name)}${s === "live" ? ", live now" : ""}${known ? `, ${outs} players out` : ""}. Show game info.">
-      <div class="rows">${teamRow(a)}${teamRow(h)}</div>
-      ${statusBox}
-      <div class="foot"><span class="left">${left}${pills.join("")}</span><span class="info">Game info ${CHEV}</span></div>
+  const stub = known
+    ? `<span class="big">${outs}</span><span class="small">Player${outs === 1 ? "" : "s"}<br>out</span>`
+    : `<span class="big">–</span><span class="small">No<br>report</span>`;
+  return `<div class="game" data-gid="${esc(id)}">
+    <button type="button" class="bug ticket" aria-expanded="false" aria-controls="${esc(id)}"
+      aria-label="${esc(a.name)} at ${esc(h.name)}${s === "live" ? ", live now" : s === "done" ? ", final" : ""}${known ? `, ${outs} players out` : ""}. Show game info.">
+      <div class="tk-main">
+        <div class="tk-band" style="--ca:${ca};--ch:${ch}"><span>${g.cup ? "NBA Cup" : "NBA · Regular season"}</span><span>${esc(dayLabel(g.day, { weekday: "short", month: "short", day: "numeric" }))}</span></div>
+        <div class="tk-teams">
+          ${teamLine(a, g, awayLost)}
+          <div class="tk-at">at</div>
+          ${teamLine(h, g, homeLost)}
+        </div>
+        <div class="tk-meta">${pills.join("")}</div>
+      </div>
+      <div class="tk-stub"${known ? ` style="--oc:${outColor([ta, th])}"` : ""}>
+        <span class="admit">Admit one</span>
+        ${stub}
+        <span class="barcode" aria-hidden="true"></span>
+        <span class="info">Game info ${CHEV}</span>
+      </div>
     </button>
     <div class="inj" id="${esc(id)}" hidden>
       <div class="total">${known ? `${outs} player${outs === 1 ? "" : "s"} out` : "Injury report"}</div>
